@@ -78,16 +78,179 @@
   text-align: center;
 }
 
+/* Auth Links */
+.auth-links {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.login-link {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.signup-link {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.signup-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+  color: white;
+}
+
+/* User Menu */
+.user-menu {
+  position: relative;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.user-button:hover {
+  border-color: var(--primary-color);
+  background: white;
+}
+
+.user-icon {
+  font-size: 18px;
+}
+
+.user-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  transition: transform 0.3s ease;
+}
+
+.user-button:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background: #f8f9fa;
+  color: var(--primary-color);
+}
+
+.dropdown-item.logout-btn {
+  border-top: 1px solid #e0e0e0;
+  color: #dc3545;
+}
+
+.dropdown-item.logout-btn:hover {
+  background: #fee;
+  color: #c33;
+}
+
 @media (max-width: 768px) {
   .logo-text {
     font-size: 20px;
   }
   
   .nav {
-    gap: 20px;
+    gap: 15px;
   }
   
   .nav-link {
     font-size: 14px;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .auth-links {
+    gap: 10px;
+  }
+
+  .signup-link {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 10px 0;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .logo-icon {
+    font-size: 24px;
+  }
+
+  .nav {
+    gap: 10px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+  }
+
+  .cart-link span:not(.cart-icon):not(.cart-badge) {
+    display: none;
+  }
+
+  .login-link {
+    font-size: 12px;
+  }
+
+  .signup-link {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }

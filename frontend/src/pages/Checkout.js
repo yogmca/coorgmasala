@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { orderAPI } from '../services/api';
 import './Checkout.css';
 
 const Checkout = () => {
   const { cart, getCartTotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,30 @@ const Checkout = () => {
     country: 'India',
     paymentMethod: 'upi'
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Pre-fill form with user data
+  useEffect(() => {
+    if (user) {
+      const defaultAddress = user.addresses?.find(addr => addr.isDefault) || user.addresses?.[0] || {};
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        street: defaultAddress.street || '',
+        city: defaultAddress.city || '',
+        state: defaultAddress.state || '',
+        pincode: defaultAddress.pincode || ''
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     setFormData({
