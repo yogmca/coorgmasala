@@ -1,7 +1,7 @@
 {
   "name": "coorg-spices-frontend",
   "version": "1.0.0",
-  "description": "Frontend for Coorg Spices e-commerce platform",
+  "description": "Frontend for Coorg Masala e-commerce platform",
   "private": true,
   "dependencies": {
     "@react-oauth/google": "^0.13.4",

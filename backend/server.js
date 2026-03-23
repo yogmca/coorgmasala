@@ -59,7 +59,7 @@ app.use('/api/cart', require('./routes/cart'));
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Coorg Spices API is running',
+    message: 'Coorg Masala API is running',
     timestamp: new Date().toISOString()
   });
 });

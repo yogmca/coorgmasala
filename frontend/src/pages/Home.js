@@ -52,7 +52,7 @@ const Home = () => {
 
       <section className="hero">
         <div className="hero-content">
-          <h1>Premium Coorg Spices</h1>
+          <h1>Premium Coorg Masala</h1>
           <p>Authentic Indian spices and coffee from the heart of Coorg</p>
           <p className="hero-subtitle">Direct from plantations to your kitchen</p>
         </div>

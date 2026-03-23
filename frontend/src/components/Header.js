@@ -23,7 +23,7 @@ const Header = () => {
         <div className="header-content">
           <Link to="/" className="logo">
             <span className="logo-icon">🌶️</span>
-            <span className="logo-text">Coorg Spices</span>
+            <span className="logo-text">Coorg Masala</span>
           </Link>
 
           <nav className="nav">

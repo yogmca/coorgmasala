@@ -72,7 +72,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <h2>Welcome Back</h2>
-        <p className="login-subtitle">Login to your Coorg Spices account</p>
+        <p className="login-subtitle">Login to your Coorg Masala account</p>
 
         {error && <div className="error-message">{error}</div>}
 

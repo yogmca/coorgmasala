@@ -162,7 +162,7 @@ const Checkout = () => {
       amount: paymentData.amount,
       currency: paymentData.currency,
       order_id: paymentData.orderId,
-      name: 'Coorg Spices',
+      name: 'Coorg Masala',
       description: `Order ${order.orderId}`,
       handler: async function (response) {
         try {

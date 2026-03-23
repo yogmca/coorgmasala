@@ -32,7 +32,7 @@ function App() {
             </main>
             <footer className="footer">
               <div className="container">
-                <p>&copy; 2024 Coorg Spices. All rights reserved.</p>
+                <p>&copy; 2024 Coorg Masala. All rights reserved.</p>
                 <p>Premium Indian spices from the heart of Coorg</p>
               </div>
             </footer>

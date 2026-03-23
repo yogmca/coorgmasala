@@ -109,7 +109,7 @@ const Signup = () => {
     <div className="signup-container">
       <div className="signup-card">
         <h2>Create Account</h2>
-        <p className="signup-subtitle">Join Coorg Spices today</p>
+        <p className="signup-subtitle">Join Coorg Masala today</p>
 
         {error && <div className="error-message">{error}</div>}
 

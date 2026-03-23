@@ -1,7 +1,7 @@
 {
   "name": "coorg-spices-backend",
   "version": "1.0.0",
-  "description": "Backend API for Coorg Spices e-commerce platform",
+  "description": "Backend API for Coorg Masala e-commerce platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
