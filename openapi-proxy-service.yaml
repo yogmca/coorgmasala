@@ -1,0 +1,475 @@
+openapi: 3.0.3
+info:
+  title: GSF ALV Proxy Service API
+  description: |
+    API specification for the GSF ALV Proxy Service that handles data cube queries
+    and analytics operations through a proxy invoke endpoint.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://localhost:8080/gsf/alv
+    description: GSF ALV base path
+
+tags:
+  - name: Proxy
+    description: Proxy service operations
+
+paths:
+  /businessareas/{businessArea}/subjectareas/{subjectArea}/proxy/Invoke:
+    post:
+      tags:
+        - Proxy
+      summary: Invoke proxy service
+      description: |
+        Invokes the proxy service to execute queries or operations against
+        the specified business area and subject area.
+      operationId: invokeProxy
+      parameters:
+        - name: businessArea
+          in: path
+          required: true
+          description: The business area identifier (e.g., 'utility', 'mcp-playground', 'walle-finance-earnings')
+          schema:
+            type: string
+            example: utility
+        - name: subjectArea
+          in: path
+          required: true
+          description: The subject area identifier (e.g., 'alv', 'playground', 'finance-earnings')
+          schema:
+            type: string
+            example: alv
+      requestBody:
+        required: true
+        description: The payload containing the query or operation details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProxyInvokeRequest'
+            examples:
+              cubeQuery:
+                summary: Data cube query example
+                value:
+                  operation: "query"
+                  cube_id: "100001"
+                  dimensions:
+                    - "COUNTRY"
+                    - "FISCAL_YEAR"
+                  measures:
+                    - name: "SALES_AMOUNT"
+                      aggregation: "SUM"
+                  filters:
+                    - dimension: "COUNTRY"
+                      operator: "IN"
+                      values: ["USA", "Canada"]
+                    - dimension: "FISCAL_YEAR"
+                      operator: "EQUALS"
+                      values: ["2024"]
+              metadataRequest:
+                summary: Metadata request example
+                value:
+                  operation: "getMetadata"
+                  cube_id: "100001"
+              dimensionOptions:
+                summary: Get dimension options example
+                value:
+                  operation: "getDimensionOptions"
+                  cube_id: "100001"
+                  dimension_key: "COUNTRY"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProxyInvokeResponse'
+              examples:
+                querySuccess:
+                  summary: Successful query response
+                  value:
+                    status: "success"
+                    data:
+                      rows:
+                        - COUNTRY: "USA"
+                          FISCAL_YEAR: "2024"
+                          SALES_AMOUNT: 1500000
+                        - COUNTRY: "Canada"
+                          FISCAL_YEAR: "2024"
+                          SALES_AMOUNT: 750000
+                      total_rows: 2
+                    metadata:
+                      execution_time_ms: 245
+                      query_id: "q_12345"
+                metadataSuccess:
+                  summary: Successful metadata response
+                  value:
+                    status: "success"
+                    data:
+                      cube_id: "100001"
+                      dimensions:
+                        - key: "COUNTRY"
+                          name: "Country"
+                          type: "string"
+                        - key: "FISCAL_YEAR"
+                          name: "Fiscal Year"
+                          type: "string"
+                      measures:
+                        - key: "SALES_AMOUNT"
+                          name: "Sales Amount"
+                          type: "number"
+                          aggregations: ["SUM", "AVG", "MIN", "MAX"]
+        '400':
+          description: Bad request - Invalid input parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "INVALID_REQUEST"
+                  message: "Missing required field: operation"
+                  details:
+                    field: "operation"
+                    reason: "Field is required"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Authentication token is missing or invalid"
+        '404':
+          description: Not found - Business area or subject area does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "NOT_FOUND"
+                  message: "Business area 'utility' or subject area 'alv' not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "An unexpected error occurred while processing the request"
+                  details:
+                    trace_id: "trace_xyz789"
+
+components:
+  schemas:
+    ProxyInvokeRequest:
+      type: object
+      required:
+        - operation
+      properties:
+        operation:
+          type: string
+          description: The operation to perform
+          enum:
+            - query
+            - getMetadata
+            - getDimensionOptions
+            - execute
+          example: query
+        cube_id:
+          type: string
+          description: The identifier of the data cube
+          example: "100001"
+        dimensions:
+          type: array
+          description: List of dimensions to include in the query
+          items:
+            type: string
+          example: ["COUNTRY", "FISCAL_YEAR"]
+        measures:
+          type: array
+          description: List of measures to retrieve
+          items:
+            oneOf:
+              - type: string
+              - $ref: '#/components/schemas/MeasureDefinition'
+          example:
+            - "SALES_AMOUNT"
+            - "SALES_UNITS"
+        filters:
+          type: array
+          description: Filters to apply to the query
+          items:
+            $ref: '#/components/schemas/FilterDefinition'
+        dimension_key:
+          type: string
+          description: Dimension key for getDimensionOptions operation
+          example: "COUNTRY"
+        options:
+          type: object
+          description: Additional options for the operation
+          properties:
+            limit:
+              type: integer
+              description: Maximum number of rows to return
+              example: 1000
+            offset:
+              type: integer
+              description: Number of rows to skip
+              example: 0
+            sort:
+              type: array
+              description: Sorting specifications
+              items:
+                $ref: '#/components/schemas/SortDefinition'
+
+    MeasureDefinition:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The measure name
+          example: "SALES_AMOUNT"
+        aggregation:
+          type: string
+          description: Aggregation function to apply
+          enum:
+            - SUM
+            - AVG
+            - MIN
+            - MAX
+            - COUNT
+          example: "SUM"
+        alias:
+          type: string
+          description: Alias for the measure in the result
+          example: "total_sales"
+
+    FilterDefinition:
+      type: object
+      required:
+        - dimension
+        - operator
+        - values
+      properties:
+        dimension:
+          type: string
+          description: The dimension to filter on
+          example: "COUNTRY"
+        operator:
+          type: string
+          description: The filter operator
+          enum:
+            - EQUALS
+            - NOT_EQUALS
+            - IN
+            - NOT_IN
+            - GREATER_THAN
+            - LESS_THAN
+            - GREATER_THAN_OR_EQUAL
+            - LESS_THAN_OR_EQUAL
+            - BETWEEN
+            - LIKE
+            - IS_NULL
+            - IS_NOT_NULL
+          example: "IN"
+        values:
+          type: array
+          description: Values to filter by
+          items:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+          example: ["USA", "Canada"]
+
+    SortDefinition:
+      type: object
+      required:
+        - field
+      properties:
+        field:
+          type: string
+          description: Field to sort by
+          example: "SALES_AMOUNT"
+        direction:
+          type: string
+          description: Sort direction
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+          example: "DESC"
+
+    ProxyInvokeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Response status
+          enum:
+            - success
+            - error
+          example: success
+        data:
+          type: object
+          description: Response data (structure varies by operation)
+          properties:
+            rows:
+              type: array
+              description: Query result rows
+              items:
+                type: object
+                additionalProperties: true
+            total_rows:
+              type: integer
+              description: Total number of rows
+              example: 2
+            dimensions:
+              type: array
+              description: Available dimensions (for metadata)
+              items:
+                $ref: '#/components/schemas/DimensionMetadata'
+            measures:
+              type: array
+              description: Available measures (for metadata)
+              items:
+                $ref: '#/components/schemas/MeasureMetadata'
+            options:
+              type: array
+              description: Available dimension values (for getDimensionOptions)
+              items:
+                type: string
+        metadata:
+          type: object
+          description: Response metadata
+          properties:
+            execution_time_ms:
+              type: integer
+              description: Query execution time in milliseconds
+              example: 245
+            query_id:
+              type: string
+              description: Unique query identifier
+              example: "q_12345"
+            timestamp:
+              type: string
+              format: date-time
+              description: Response timestamp
+              example: "2024-01-15T10:30:00Z"
+
+    DimensionMetadata:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Dimension key
+          example: "COUNTRY"
+        name:
+          type: string
+          description: Human-readable dimension name
+          example: "Country"
+        type:
+          type: string
+          description: Data type
+          enum:
+            - string
+            - number
+            - date
+            - boolean
+          example: "string"
+        description:
+          type: string
+          description: Dimension description
+          example: "Country where the transaction occurred"
+
+    MeasureMetadata:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Measure key
+          example: "SALES_AMOUNT"
+        name:
+          type: string
+          description: Human-readable measure name
+          example: "Sales Amount"
+        type:
+          type: string
+          description: Data type
+          enum:
+            - number
+            - currency
+            - percentage
+          example: "currency"
+        aggregations:
+          type: array
+          description: Supported aggregation functions
+          items:
+            type: string
+          example: ["SUM", "AVG", "MIN", "MAX"]
+        unit:
+          type: string
+          description: Unit of measurement
+          example: "USD"
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          example: error
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "INVALID_REQUEST"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Missing required field: operation"
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+security:
+  - bearerAuth: []
+  - apiKey: []

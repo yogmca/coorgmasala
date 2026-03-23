@@ -1,0 +1,266 @@
+.order-success-page {
+  padding: 40px 0;
+  min-height: 80vh;
+}
+
+.success-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 50px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  font-size: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 30px;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-card h1 {
+  font-size: 32px;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+}
+
+.success-message {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.order-details {
+  background-color: var(--bg-light);
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row .label {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.detail-row .value {
+  color: var(--text-light);
+}
+
+.detail-row .value.amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.detail-row .value.status {
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.detail-row .value.status.completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.detail-row .value.status.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.shipping-info {
+  background-color: var(--bg-light);
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.shipping-info h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: var(--text-dark);
+}
+
+.shipping-info p {
+  font-size: 14px;
+  color: var(--text-light);
+  margin: 5px 0;
+  line-height: 1.6;
+}
+
+.order-items {
+  background-color: var(--bg-light);
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.order-items h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: var(--text-dark);
+}
+
+.order-item {
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.item-details-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.item-subtotal {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.next-steps {
+  background-color: #e8f5e9;
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.next-steps h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: var(--text-dark);
+}
+
+.next-steps ul {
+  list-style: none;
+  padding: 0;
+}
+
+.next-steps li {
+  font-size: 14px;
+  color: var(--text-dark);
+  margin: 12px 0;
+  padding-left: 30px;
+  position: relative;
+  line-height: 1.6;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.home-btn {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.home-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.order-not-found {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.order-not-found h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: var(--text-dark);
+}
+
+.order-not-found a {
+  color: var(--primary-color);
+  font-weight: 600;
+  transition: opacity 0.3s ease;
+}
+
+.order-not-found a:hover {
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .success-card {
+    padding: 30px 20px;
+  }
+  
+  .success-card h1 {
+    font-size: 24px;
+  }
+  
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 36px;
+  }
+  
+  .order-details,
+  .shipping-info,
+  .order-items,
+  .next-steps {
+    padding: 20px;
+  }
+  
+  .item-details-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

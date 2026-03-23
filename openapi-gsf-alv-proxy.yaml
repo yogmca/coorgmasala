@@ -1,0 +1,489 @@
+openapi: 3.0.3
+info:
+  title: GSF ALV Proxy Service API
+  description: |
+    API specification for the GSF (Global Service Framework) ALV Proxy Service.
+    This service provides a proxy endpoint for invoking operations against business areas and subject areas.
+    
+    **Authentication**: Requires X-Gsf-Apptoken header and peerAppId header.
+  version: 1.0.0
+  contact:
+    name: GSF API Support
+
+servers:
+  - url: http://localhost:8080/gsf/alv
+    description: Local development server
+  - url: http://localhost:8080
+    description: Base server URL
+
+tags:
+  - name: Proxy
+    description: Proxy invocation operations
+
+paths:
+  /businessareas/{businessArea}/subjectareas/{subjectArea}/proxy/Invoke:
+    post:
+      tags:
+        - Proxy
+      summary: Invoke proxy service
+      description: |
+        Invokes the proxy service to execute operations against the specified business area and subject area.
+        
+        The endpoint accepts an empty JSON object `{}` or a structured payload depending on the operation.
+      operationId: invokeProxy
+      parameters:
+        - name: businessArea
+          in: path
+          required: true
+          description: |
+            The business area identifier. Examples:
+            - `utility` - Utility services
+            - `mcp-playground` - MCP playground environment
+            - `walle-finance-earnings` - Finance earnings data
+          schema:
+            type: string
+            example: utility
+        
+        - name: subjectArea
+          in: path
+          required: true
+          description: |
+            The subject area identifier within the business area. Examples:
+            - `alv` - ALV subject area
+            - `playground` - Playground subject area
+            - `finance-earnings` - Finance earnings subject area
+          schema:
+            type: string
+            example: alv
+        
+        - name: X-Gsf-Apptoken
+          in: header
+          required: true
+          description: |
+            GSF Application Token for authentication. Format: `{token}:{salt}:{timestamp}:{version}`
+            
+            Example: `R90VjbDpMmwNVDe7fqt6posoTD/PieP+ixdlvpLRejs=:ubv9h2c35y6k6vcdximq:1711252273377:1`
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9+/=]+:[a-z0-9]+:\d+:\d+$'
+            example: "R90VjbDpMmwNVDe7fqt6posoTD/PieP+ixdlvpLRejs=:ubv9h2c35y6k6vcdximq:1711252273377:1"
+        
+        - name: peerAppId
+          in: header
+          required: true
+          description: |
+            Peer Application ID for identifying the calling application.
+          schema:
+            type: string
+            example: "136848"
+        
+        - name: Accept
+          in: header
+          required: false
+          description: Expected response content type
+          schema:
+            type: string
+            default: application/json
+            example: application/json
+        
+        - name: Content-Type
+          in: header
+          required: true
+          description: Request content type
+          schema:
+            type: string
+            default: application/json
+            example: application/json
+
+      requestBody:
+        required: true
+        description: |
+          The request payload. Can be an empty JSON object `{}` for default operations,
+          or a structured payload with specific parameters.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/EmptyRequest'
+                - $ref: '#/components/schemas/GenericProxyRequest'
+                - $ref: '#/components/schemas/QueryRequest'
+                - $ref: '#/components/schemas/MetadataRequest'
+            examples:
+              emptyRequest:
+                summary: Empty request (default operation)
+                description: Minimal request with empty JSON object
+                value: {}
+              
+              genericRequest:
+                summary: Generic proxy request
+                description: Generic request with service and method
+                value:
+                  service: "DataService"
+                  method: "execute"
+                  parameters:
+                    key1: "value1"
+                    key2: "value2"
+              
+              queryRequest:
+                summary: Data query request
+                description: Request to query data with filters
+                value:
+                  operation: "query"
+                  dimensions:
+                    - "COUNTRY"
+                    - "FISCAL_YEAR"
+                  measures:
+                    - "SALES_AMOUNT"
+                  filters:
+                    COUNTRY: ["USA", "Canada"]
+                    FISCAL_YEAR: ["2024"]
+              
+              metadataRequest:
+                summary: Metadata request
+                description: Request to retrieve metadata
+                value:
+                  operation: "getMetadata"
+                  entity: "cube"
+                  entityId: "100001"
+              
+              rpcStyleRequest:
+                summary: RPC-style request
+                description: JSON-RPC style request format
+                value:
+                  jsonrpc: "2.0"
+                  method: "invoke"
+                  params:
+                    action: "execute"
+                    data: {}
+                  id: 1
+
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - $ref: '#/components/schemas/DataResponse'
+              examples:
+                emptySuccess:
+                  summary: Empty request success
+                  value:
+                    status: "success"
+                    message: "Operation completed successfully"
+                
+                dataSuccess:
+                  summary: Data query success
+                  value:
+                    status: "success"
+                    data:
+                      rows:
+                        - COUNTRY: "USA"
+                          FISCAL_YEAR: "2024"
+                          SALES_AMOUNT: 1500000
+                        - COUNTRY: "Canada"
+                          FISCAL_YEAR: "2024"
+                          SALES_AMOUNT: 750000
+                      totalRows: 2
+                    metadata:
+                      executionTime: 245
+                      timestamp: "2024-03-24T10:30:00Z"
+        
+        '400':
+          description: Bad Request - Invalid input parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPayload:
+                  summary: Invalid payload structure
+                  value:
+                    status: "error"
+                    error:
+                      code: "BAD_REQUEST"
+                      message: "Invalid request payload"
+                      details: "Expected JSON object"
+                
+                missingField:
+                  summary: Missing required field
+                  value:
+                    status: "error"
+                    error:
+                      code: "MISSING_FIELD"
+                      message: "Required field is missing"
+                      field: "operation"
+        
+        '401':
+          description: Unauthorized - Invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Invalid app token
+                  value:
+                    status: "error"
+                    error:
+                      code: "UNAUTHORIZED"
+                      message: "Invalid or expired X-Gsf-Apptoken"
+                
+                missingPeerAppId:
+                  summary: Missing peer app ID
+                  value:
+                    status: "error"
+                    error:
+                      code: "UNAUTHORIZED"
+                      message: "Missing required header: peerAppId"
+        
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "FORBIDDEN"
+                  message: "Insufficient permissions to access this resource"
+        
+        '404':
+          description: Not Found - Business area or subject area does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "NOT_FOUND"
+                  message: "Business area 'utility' or subject area 'alv' not found"
+        
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "An unexpected error occurred"
+                  traceId: "trace_xyz789"
+
+components:
+  schemas:
+    EmptyRequest:
+      type: object
+      description: Empty JSON object for default operations
+      example: {}
+      additionalProperties: false
+    
+    GenericProxyRequest:
+      type: object
+      description: Generic proxy request structure
+      properties:
+        service:
+          type: string
+          description: Service name to invoke
+          example: "DataService"
+        method:
+          type: string
+          description: Method name to execute
+          example: "execute"
+        parameters:
+          type: object
+          description: Method parameters
+          additionalProperties: true
+          example:
+            key1: "value1"
+            key2: "value2"
+        options:
+          type: object
+          description: Additional options
+          additionalProperties: true
+      additionalProperties: true
+    
+    QueryRequest:
+      type: object
+      description: Data query request structure
+      properties:
+        operation:
+          type: string
+          description: Operation type
+          enum:
+            - query
+            - getMetadata
+            - getDimensionOptions
+            - execute
+          example: "query"
+        dimensions:
+          type: array
+          description: List of dimensions to query
+          items:
+            type: string
+          example: ["COUNTRY", "FISCAL_YEAR"]
+        measures:
+          type: array
+          description: List of measures to retrieve
+          items:
+            type: string
+          example: ["SALES_AMOUNT", "SALES_UNITS"]
+        filters:
+          type: object
+          description: Filters to apply (dimension -> values mapping)
+          additionalProperties:
+            type: array
+            items:
+              oneOf:
+                - type: string
+                - type: number
+          example:
+            COUNTRY: ["USA", "Canada"]
+            FISCAL_YEAR: ["2024"]
+        options:
+          type: object
+          description: Query options (limit, offset, sort, etc.)
+          additionalProperties: true
+      additionalProperties: true
+    
+    MetadataRequest:
+      type: object
+      description: Metadata request structure
+      properties:
+        operation:
+          type: string
+          enum:
+            - getMetadata
+          example: "getMetadata"
+        entity:
+          type: string
+          description: Entity type
+          example: "cube"
+        entityId:
+          type: string
+          description: Entity identifier
+          example: "100001"
+      additionalProperties: true
+    
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          example: "success"
+        message:
+          type: string
+          description: Success message
+          example: "Operation completed successfully"
+        data:
+          type: object
+          description: Response data
+          additionalProperties: true
+        metadata:
+          type: object
+          description: Response metadata
+          additionalProperties: true
+    
+    DataResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          example: "success"
+        data:
+          type: object
+          properties:
+            rows:
+              type: array
+              description: Data rows
+              items:
+                type: object
+                additionalProperties: true
+            totalRows:
+              type: integer
+              description: Total number of rows
+              example: 100
+          additionalProperties: true
+        metadata:
+          type: object
+          properties:
+            executionTime:
+              type: integer
+              description: Execution time in milliseconds
+              example: 245
+            timestamp:
+              type: string
+              format: date-time
+              description: Response timestamp
+          additionalProperties: true
+    
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+          example: "error"
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "BAD_REQUEST"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Invalid request payload"
+            details:
+              type: string
+              description: Additional error details
+              example: "Expected JSON object"
+            field:
+              type: string
+              description: Field that caused the error
+              example: "operation"
+            traceId:
+              type: string
+              description: Trace ID for debugging
+              example: "trace_xyz789"
+
+  securitySchemes:
+    GsfAppToken:
+      type: apiKey
+      in: header
+      name: X-Gsf-Apptoken
+      description: |
+        GSF Application Token for authentication.
+        Format: `{base64Token}:{salt}:{timestamp}:{version}`
+    
+    PeerAppId:
+      type: apiKey
+      in: header
+      name: peerAppId
+      description: Peer Application ID identifying the calling application
+
+security:
+  - GsfAppToken: []
+    PeerAppId: []
