@@ -28,12 +28,12 @@ git pull origin main
 # Update backend
 echo -e "${GREEN}[INFO]${NC} Updating backend..."
 cd "$APP_DIR/backend"
-npm install --production
+npm install
 
 # Update frontend
 echo -e "${GREEN}[INFO]${NC} Updating frontend..."
 cd "$APP_DIR/frontend"
-npm install --production
+npm install
 npm run build
 
 # Restart services

@@ -105,18 +105,27 @@ cd "$APP_DIR/backend"
 
 # Install backend dependencies
 print_status "Installing backend dependencies..."
-npm install --production
+npm install
 
-# Check if .env file exists
-if [ ! -f ".env" ]; then
-    print_warning ".env file not found. Creating from .env.example..."
-    cp .env.example .env
-    print_warning "Please update the .env file with your actual credentials:"
-    print_warning "  - MONGODB_URI"
-    print_warning "  - JWT_SECRET"
-    print_warning "  - Payment gateway credentials"
-    read -p "Press enter to continue after updating .env file..."
-fi
+# Create .env file with production values
+print_status "Creating backend .env file..."
+cat > .env <<EOF
+PORT=3001
+MONGODB_URI=mongodb+srv://yogemca_db_user:IUsHwPUcgO2UL7LA@cluster0.lqzvstt.mongodb.net/?appName=Cluster0
+JWT_SECRET=coorg_spices_production_secret_key_2024_$(openssl rand -hex 16)
+
+# Payment Gateway Credentials
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+
+# Bank Account Details
+BANK_ACCOUNT_NUMBER=your_bank_account_number
+BANK_IFSC_CODE=your_bank_ifsc_code
+BANK_NAME=your_bank_name
+EOF
+
+print_status "Backend .env file created successfully"
 
 # Setup Frontend
 print_status "Setting up frontend..."
@@ -124,15 +133,20 @@ cd "$APP_DIR/frontend"
 
 # Install frontend dependencies
 print_status "Installing frontend dependencies..."
-npm install --production
+npm install
 
-# Check if .env file exists
-if [ ! -f ".env" ]; then
-    print_warning ".env file not found. Creating from .env.example..."
-    cp .env.example .env
-    print_warning "Please update the .env file with your actual credentials"
-    read -p "Press enter to continue after updating .env file..."
-fi
+# Get EC2 public IP
+EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+# Create .env file with production values
+print_status "Creating frontend .env file..."
+cat > .env <<EOF
+REACT_APP_API_URL=http://${EC2_PUBLIC_IP}/api
+REACT_APP_STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key
+REACT_APP_RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
+EOF
+
+print_status "Frontend .env file created with API URL: http://${EC2_PUBLIC_IP}/api"
 
 # Build frontend for production
 print_status "Building frontend for production..."
