@@ -16,7 +16,21 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // Handle empty string or undefined from env
+  const getApiUrl = () => {
+    const envUrl = process.env.REACT_APP_API_URL;
+    if (envUrl && envUrl.trim()) {
+      return envUrl;
+    }
+    // Fallback logic
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:5000/api';
+    }
+    // Production: use same domain
+    return `${window.location.origin}/api`;
+  };
+  
+  const API_URL = getApiUrl();
 
   // Load user on mount if token exists
   useEffect(() => {
@@ -30,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   // Load user data
   const loadUser = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/auth/me`, {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -50,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   // Login
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email,
         password
       });
@@ -74,7 +88,7 @@ export const AuthProvider = ({ children }) => {
   // Signup
   const signup = async (userData) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/signup`, userData);
+      const response = await axios.post(`${API_URL}/auth/signup`, userData);
 
       const { token: newToken, user: newUser } = response.data;
       
@@ -95,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   // Google Login
   const googleLogin = async (credential, name, email) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/google`, {
+      const response = await axios.post(`${API_URL}/auth/google`, {
         credential,
         name,
         email
@@ -128,7 +142,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/auth/profile`,
+        `${API_URL}/auth/profile`,
         profileData,
         {
           headers: {
@@ -151,7 +165,7 @@ export const AuthProvider = ({ children }) => {
   // Get user orders
   const getUserOrders = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/auth/orders`, {
+      const response = await axios.get(`${API_URL}/auth/orders`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

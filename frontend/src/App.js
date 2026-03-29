@@ -10,6 +10,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import Export from './pages/Export';
 import './App.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/export" element={<Export />} />
               </Routes>
             </main>
             <footer className="footer">

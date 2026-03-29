@@ -6,6 +6,25 @@ import { orderAPI } from '../services/api';
 import './Checkout.css';
 
 const Checkout = () => {
+  // Get the base URL for images (remove /api from the API URL)
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/60x60?text=No+Image';
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // Get API URL from env or use current origin for production
+    let baseUrl;
+    if (process.env.REACT_APP_API_URL) {
+      baseUrl = process.env.REACT_APP_API_URL.replace('/api', '');
+    } else if (window.location.hostname === 'localhost') {
+      baseUrl = 'http://localhost:5000';
+    } else {
+      // Production: use same domain
+      baseUrl = window.location.origin;
+    }
+    
+    return `${baseUrl}${imagePath}`;
+  };
+
   const { cart, getCartTotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -474,10 +493,13 @@ const Checkout = () => {
                 return (
                   <div key={item._id} className="summary-item">
                     <img
-                      src={item.product.image || 'https://via.placeholder.com/60x60?text=Product'}
+                      src={getImageUrl(item.product.image)}
                       alt={item.product.name || 'Product'}
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/60x60?text=' + (item.product.name || 'Product');
+                        // Prevent infinite loop by checking if already using placeholder
+                        if (!e.target.src.includes('placeholder')) {
+                          e.target.src = 'https://via.placeholder.com/60x60?text=' + encodeURIComponent(item.product.name || 'Product');
+                        }
                       }}
                     />
                     <div className="item-info">

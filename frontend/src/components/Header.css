@@ -183,6 +183,16 @@
   color: var(--primary-color);
 }
 
+.dropdown-item.admin-link {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.dropdown-item.admin-link:hover {
+  background: #e8f5e9;
+  color: #1e8449;
+}
+
 .dropdown-item.logout-btn {
   border-top: 1px solid #e0e0e0;
   color: #dc3545;

@@ -55,6 +55,15 @@ const Header = () => {
                     >
                       My Profile
                     </Link>
+                    {user?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="dropdown-item admin-link"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       className="dropdown-item logout-btn"
                       onClick={handleLogout}

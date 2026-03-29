@@ -1,8 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { adminAuth } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+
+// Configure multer for image upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../public/images');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Keep original filename or use timestamp
+    const uniqueName = Date.now() + '-' + file.originalname.replace(/\s+/g, '-').toLowerCase();
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 // Get all products
 router.get('/', async (req, res) => {
@@ -92,8 +127,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new product (Admin only - add auth middleware in production)
-router.post('/', async (req, res) => {
+// Create new product (Admin only)
+router.post('/', adminAuth, async (req, res) => {
   try {
     const product = await Product.create(req.body);
     res.status(201).json({
@@ -108,8 +143,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update product (Admin only - add auth middleware in production)
-router.put('/:id', async (req, res) => {
+// Update product (Admin only)
+router.put('/:id', adminAuth, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -136,8 +171,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete product (Admin only - add auth middleware in production)
-router.delete('/:id', async (req, res) => {
+// Delete product (Admin only)
+router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
 
@@ -151,6 +186,31 @@ router.delete('/:id', async (req, res) => {
     res.json({
       success: true,
       message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Upload image endpoint (Admin only)
+router.post('/upload-image', adminAuth, upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No image file provided'
+      });
+    }
+
+    const imagePath = `/images/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      imagePath: imagePath,
+      message: 'Image uploaded successfully'
     });
   } catch (error) {
     res.status(500).json({

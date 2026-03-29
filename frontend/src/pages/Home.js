@@ -5,6 +5,36 @@ import { useCart } from '../context/CartContext';
 import './Home.css';
 
 const Home = () => {
+  // SVG placeholder as data URI (no external dependency)
+  const getPlaceholderImage = (text) => {
+    const svg = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+      <rect width="300" height="300" fill="#e0e0e0"/>
+      <text x="50%" y="50%" font-family="Arial" font-size="16" fill="#666" text-anchor="middle" dy=".3em">${text}</text>
+    </svg>`;
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  };
+
+  // Get the base URL for images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return getPlaceholderImage('No Image');
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // Get API URL from env or use current origin for production
+    const envUrl = process.env.REACT_APP_API_URL;
+    let baseUrl;
+    
+    if (envUrl && envUrl.trim()) {
+      baseUrl = envUrl.replace('/api', '');
+    } else if (window.location.hostname === 'localhost') {
+      baseUrl = 'http://localhost:5000';
+    } else {
+      // Production: use same domain
+      baseUrl = window.location.origin;
+    }
+    
+    return `${baseUrl}${imagePath}`;
+  };
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,6 +85,46 @@ const Home = () => {
           <h1>Premium Coorg Masala</h1>
           <p>Authentic Indian spices and coffee from the heart of Coorg</p>
           <p className="hero-subtitle">Direct from plantations to your kitchen</p>
+        </div>
+      </section>
+
+      <section className="exporter-section">
+        <div className="container">
+          <div className="exporter-content">
+            <div className="exporter-image">
+              <img src="/images/Spices.jpeg" alt="Premium Indian Spices" />
+            </div>
+            <div className="exporter-text">
+              <h2>Trusted Spices Exporter in India</h2>
+              <p>
+                Coorg Masala Private Limited is a trusted spices exporter in India, offering premium quality
+                turmeric, cumin, coriander, cardamom, and other aromatic spices. We export the finest Indian
+                spices to countries worldwide including Dubai, Europe (Germany), and many more.
+              </p>
+              <p>
+                Our commitment to quality and authenticity has made us one of the best spices exporters in India.
+                We source directly from Coorg plantations, ensuring that every spice retains its natural aroma,
+                flavor, and nutritional value.
+              </p>
+              <div className="export-destinations">
+                <h3>We Export To:</h3>
+                <ul>
+                  <li>🇦🇪 Dubai & UAE</li>
+                  <li>🇩🇪 Germany & Europe</li>
+                  <li>🌍 Worldwide Destinations</li>
+                </ul>
+              </div>
+              <div className="certifications">
+                <h3>Certified & Licensed</h3>
+                <p className="cert-text">
+                  ✓ FSSAI Licensed<br/>
+                  ✓ Import Export Code (IEC)<br/>
+                  ✓ Spices Board Registration (CRES)
+                </p>
+              </div>
+              <a href="/export" className="export-cta-btn">Contact Us for Export Inquiries</a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -115,11 +185,14 @@ const Home = () => {
               {products.map(product => (
                 <div key={product._id} className="product-card">
                   <div className="product-image">
-                    <img 
-                      src={product.image} 
+                    <img
+                      src={getImageUrl(product.image)}
                       alt={product.name}
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x300?text=' + product.name;
+                        // Prevent infinite loop by checking if already using data URI
+                        if (!e.target.src.startsWith('data:')) {
+                          e.target.src = getPlaceholderImage(product.name);
+                        }
                       }}
                     />
                     {!product.inStock && (
