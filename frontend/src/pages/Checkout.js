@@ -174,7 +174,50 @@ const Checkout = () => {
     }
   };
 
+  // Poll backend to check if payment was completed (for QR code / external app payments like PhonePe)
+  const pollPaymentStatus = async (orderId, maxAttempts = 30, intervalMs = 3000) => {
+    let attempts = 0;
+    
+    return new Promise((resolve, reject) => {
+      const checkStatus = async () => {
+        attempts++;
+        try {
+          console.log(`Checking payment status for ${orderId} (attempt ${attempts}/${maxAttempts})...`);
+          const response = await orderAPI.checkPaymentStatus(orderId);
+          const { paymentStatus } = response.data.data;
+          
+          if (paymentStatus === 'completed') {
+            resolve('completed');
+            return;
+          } else if (paymentStatus === 'failed') {
+            resolve('failed');
+            return;
+          }
+          
+          if (attempts >= maxAttempts) {
+            resolve('timeout');
+            return;
+          }
+          
+          // Continue polling
+          setTimeout(checkStatus, intervalMs);
+        } catch (err) {
+          console.error('Payment status check error:', err);
+          if (attempts >= maxAttempts) {
+            resolve('timeout');
+            return;
+          }
+          setTimeout(checkStatus, intervalMs);
+        }
+      };
+      
+      checkStatus();
+    });
+  };
+
   const handleRazorpayPayment = async (order, paymentData) => {
+    let paymentHandled = false; // Track if handler already processed the payment
+
     const options = {
       key: process.env.REACT_APP_RAZORPAY_KEY_ID,
       amount: paymentData.amount,
@@ -183,6 +226,7 @@ const Checkout = () => {
       name: 'Coorg Masala',
       description: `Order ${order.orderId}`,
       handler: async function (response) {
+        paymentHandled = true;
         try {
           // Verify payment with backend
           await orderAPI.verifyPayment(order.orderId, {
@@ -210,9 +254,35 @@ const Checkout = () => {
         color: '#d35400'
       },
       modal: {
-        ondismiss: function () {
-          setError('Payment was cancelled');
-          setLoading(false);
+        ondismiss: async function () {
+          // Don't immediately show cancelled - the user may have paid via PhonePe/external app
+          if (paymentHandled) return; // Payment was already handled by the handler callback
+          
+          console.log('Razorpay modal dismissed. Checking if payment was completed externally (PhonePe/UPI QR)...');
+          setError('');
+          setLoading(true);
+          
+          try {
+            // Poll backend to check if payment was completed via webhook or external app
+            const status = await pollPaymentStatus(order.orderId, 20, 3000); // Poll for ~60 seconds
+            
+            if (status === 'completed') {
+              console.log('Payment confirmed via polling after modal dismiss!');
+              await clearCart();
+              navigate(`/order-success/${order.orderId}`);
+            } else if (status === 'failed') {
+              setError('Payment failed. Please try again.');
+              setLoading(false);
+            } else {
+              // Timeout - payment still pending
+              setError('Payment status is still pending. If you completed the payment on PhonePe/UPI app, please wait a moment and check your order status in your profile. If not, please try again.');
+              setLoading(false);
+            }
+          } catch (err) {
+            console.error('Error checking payment status after dismiss:', err);
+            setError('Could not verify payment status. If you completed the payment, please check your order status in your profile.');
+            setLoading(false);
+          }
         }
       }
     };
@@ -221,6 +291,7 @@ const Checkout = () => {
     if (window.Razorpay) {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
+        paymentHandled = true;
         console.error('Razorpay payment failed:', response.error);
         setError(response.error.description || 'Payment failed');
         setLoading(false);

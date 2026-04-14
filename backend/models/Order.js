@@ -80,6 +80,7 @@ const orderSchema = new mongoose.Schema({
       type: String,
       enum: ['stripe', 'razorpay']
     },
+    razorpayOrderId: String,
     paidAt: Date
   },
   orderStatus: {

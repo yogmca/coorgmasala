@@ -70,7 +70,8 @@ export const orderAPI = {
   getAll: () => api.get('/orders'),
   updateStatus: (orderId, data) => api.patch(`/orders/${orderId}/status`, data),
   initializePayment: (orderId, data) => api.post(`/orders/${orderId}/payment/initialize`, data),
-  verifyPayment: (orderId, data) => api.post(`/orders/${orderId}/payment/verify`, data)
+  verifyPayment: (orderId, data) => api.post(`/orders/${orderId}/payment/verify`, data),
+  checkPaymentStatus: (orderId) => api.get(`/orders/${orderId}/payment/status`)
 };
 
 export default api;

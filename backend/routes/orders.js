@@ -124,6 +124,9 @@ router.post('/:orderId/payment/initialize', async (req, res) => {
 
     // Update order with payment gateway info
     order.paymentInfo.paymentGateway = paymentGateway;
+    if (paymentGateway === 'razorpay' && paymentData.orderId) {
+      order.paymentInfo.razorpayOrderId = paymentData.orderId;
+    }
     await order.save();
 
     res.json({
@@ -210,6 +213,164 @@ router.post('/:orderId/payment/verify', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+// Check payment status (for polling after QR/UPI payments)
+router.get('/:orderId/payment/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Also check with Razorpay if payment is still pending and we have a razorpay order id
+    if (order.paymentInfo.status === 'pending' && order.paymentInfo.razorpayOrderId) {
+      try {
+        const razorpayOrder = await paymentService.razorpay.orders.fetch(order.paymentInfo.razorpayOrderId);
+        
+        if (razorpayOrder.status === 'paid') {
+          // Fetch payments for this order to get payment details
+          const payments = await paymentService.razorpay.orders.fetchPayments(order.paymentInfo.razorpayOrderId);
+          const successfulPayment = payments.items.find(p => p.status === 'captured');
+          
+          if (successfulPayment) {
+            // Update order status
+            order.paymentInfo.status = 'completed';
+            order.paymentInfo.transactionId = successfulPayment.id;
+            order.paymentInfo.paidAt = new Date();
+            order.orderStatus = 'confirmed';
+
+            // Update product stock
+            for (const item of order.items) {
+              try {
+                const product = await Product.findById(item.product);
+                if (product && product.stock >= item.quantity) {
+                  await Product.findByIdAndUpdate(item.product, {
+                    $inc: { stock: -item.quantity }
+                  });
+                }
+              } catch (err) {
+                console.error(`Failed to update stock for product ${item.product}:`, err.message);
+              }
+            }
+
+            await order.save();
+            console.log(`✅ Payment confirmed via status check for order ${orderId}, payment: ${successfulPayment.id}`);
+          }
+        }
+      } catch (rzpErr) {
+        console.error('Error checking Razorpay order status:', rzpErr.message);
+        // Continue with current order status even if Razorpay check fails
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        orderId: order.orderId,
+        paymentStatus: order.paymentInfo.status,
+        orderStatus: order.orderStatus,
+        transactionId: order.paymentInfo.transactionId
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Razorpay Webhook - receives payment events directly from Razorpay servers
+router.post('/webhook/razorpay', async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    
+    // Verify webhook signature if secret is configured
+    if (webhookSecret) {
+      const crypto = require('crypto');
+      const receivedSignature = req.headers['x-razorpay-signature'];
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+      
+      if (receivedSignature !== expectedSignature) {
+        console.error('❌ Razorpay webhook signature verification failed');
+        return res.status(400).json({ success: false, error: 'Invalid signature' });
+      }
+    }
+
+    const event = req.body.event;
+    const payload = req.body.payload;
+
+    console.log(`📩 Razorpay webhook received: ${event}`);
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      let razorpayOrderId, paymentId;
+
+      if (event === 'payment.captured') {
+        razorpayOrderId = payload.payment.entity.order_id;
+        paymentId = payload.payment.entity.id;
+      } else if (event === 'order.paid') {
+        razorpayOrderId = payload.order.entity.id;
+        // Get payment ID from the order's payments
+        const payments = payload.order.entity.payments;
+        paymentId = payments ? Object.keys(payments)[0] : null;
+      }
+
+      if (razorpayOrderId) {
+        // Find order by razorpay order ID
+        const order = await Order.findOne({ 'paymentInfo.razorpayOrderId': razorpayOrderId });
+        
+        if (order && order.paymentInfo.status !== 'completed') {
+          order.paymentInfo.status = 'completed';
+          order.paymentInfo.transactionId = paymentId;
+          order.paymentInfo.paidAt = new Date();
+          order.orderStatus = 'confirmed';
+
+          // Update product stock
+          for (const item of order.items) {
+            try {
+              const product = await Product.findById(item.product);
+              if (product && product.stock >= item.quantity) {
+                await Product.findByIdAndUpdate(item.product, {
+                  $inc: { stock: -item.quantity }
+                });
+              }
+            } catch (err) {
+              console.error(`Failed to update stock for product ${item.product}:`, err.message);
+            }
+          }
+
+          await order.save();
+          console.log(`✅ Webhook: Payment confirmed for order ${order.orderId}, payment: ${paymentId}`);
+        }
+      }
+    } else if (event === 'payment.failed') {
+      const razorpayOrderId = payload.payment.entity.order_id;
+      if (razorpayOrderId) {
+        const order = await Order.findOne({ 'paymentInfo.razorpayOrderId': razorpayOrderId });
+        if (order && order.paymentInfo.status === 'pending') {
+          order.paymentInfo.status = 'failed';
+          await order.save();
+          console.log(`❌ Webhook: Payment failed for order ${order.orderId}`);
+        }
+      }
+    }
+
+    // Always respond 200 to acknowledge webhook
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Webhook processing error:', error.message);
+    // Still respond 200 to prevent Razorpay from retrying
+    res.status(200).json({ success: true });
   }
 });
 
