@@ -175,7 +175,6 @@ const Checkout = () => {
   };
 
   const handleRazorpayPayment = async (order, paymentData) => {
-    // In production, integrate actual Razorpay SDK
     const options = {
       key: process.env.REACT_APP_RAZORPAY_KEY_ID,
       amount: paymentData.amount,
@@ -185,7 +184,7 @@ const Checkout = () => {
       description: `Order ${order.orderId}`,
       handler: async function (response) {
         try {
-          // Verify payment
+          // Verify payment with backend
           await orderAPI.verifyPayment(order.orderId, {
             paymentGateway: 'razorpay',
             paymentId: response.razorpay_payment_id,
@@ -206,29 +205,31 @@ const Checkout = () => {
         name: formData.name,
         email: formData.email,
         contact: formData.phone
+      },
+      theme: {
+        color: '#d35400'
+      },
+      modal: {
+        ondismiss: function () {
+          setError('Payment was cancelled');
+          setLoading(false);
+        }
       }
     };
 
-    // For demo purposes, simulate successful payment
-    setTimeout(async () => {
-      try {
-        const mockPaymentId = `pay_${Date.now()}`;
-        await orderAPI.verifyPayment(order.orderId, {
-          paymentGateway: 'razorpay',
-          paymentId: mockPaymentId,
-          signature: 'mock_signature',
-          razorpayOrderId: paymentData.orderId
-        });
-
-        await clearCart();
-        navigate(`/order-success/${order.orderId}`);
-      } catch (err) {
-        console.error('Razorpay payment error:', err);
-        const errorMessage = err.message || 'Payment processing failed';
-        setError(errorMessage);
+    // Open Razorpay checkout
+    if (window.Razorpay) {
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        console.error('Razorpay payment failed:', response.error);
+        setError(response.error.description || 'Payment failed');
         setLoading(false);
-      }
-    }, 2000);
+      });
+      rzp.open();
+    } else {
+      setError('Payment gateway not loaded. Please refresh the page and try again.');
+      setLoading(false);
+    }
   };
 
   const handleStripePayment = async (order, paymentData) => {
