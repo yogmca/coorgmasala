@@ -7,10 +7,12 @@ import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import OrderDetails from './pages/OrderDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Export from './pages/Export';
+import AdminPanel from './pages/AdminPanel';
 import './App.css';
 
 function App() {
@@ -26,10 +28,12 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+                <Route path="/order/:orderId" element={<OrderDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/export" element={<Export />} />
+                <Route path="/admin" element={<AdminPanel />} />
               </Routes>
             </main>
             <footer className="footer">

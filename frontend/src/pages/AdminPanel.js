@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import api, { orderAPI } from '../services/api';
 import './AdminPanel.css';
 
 function AdminPanel() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('products');
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingProduct, setEditingProduct] = useState(null);
@@ -40,6 +42,20 @@ function AdminPanel() {
     }
   }, []);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await orderAPI.getAll();
+      setOrders(response.data.data || []);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch orders');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Check if user is admin
     if (!user || user.role !== 'admin') {
@@ -47,7 +63,8 @@ function AdminPanel() {
       return;
     }
     fetchProducts();
-  }, [user, navigate, fetchProducts]);
+    fetchOrders();
+  }, [user, navigate, fetchProducts, fetchOrders]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -188,8 +205,155 @@ function AdminPanel() {
     return <div className="admin-panel"><div className="loading">Loading...</div></div>;
   }
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    });
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#f39c12',
+      confirmed: '#3498db',
+      processing: '#9b59b6',
+      shipped: '#2980b9',
+      out_for_delivery: '#e67e22',
+      delivered: '#27ae60',
+      cancelled: '#e74c3c'
+    };
+    return colors[status] || '#999';
+  };
+
   return (
     <div className="admin-panel">
+      {/* Tab Navigation */}
+      <div style={{ display: 'flex', gap: '0', marginBottom: '25px', borderBottom: '2px solid #e0e0e0' }}>
+        <button
+          onClick={() => setActiveTab('products')}
+          style={{
+            padding: '12px 30px',
+            border: 'none',
+            background: activeTab === 'products' ? '#d35400' : 'transparent',
+            color: activeTab === 'products' ? 'white' : '#666',
+            fontWeight: '600',
+            fontSize: '15px',
+            cursor: 'pointer',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s'
+          }}
+        >
+          Products ({products.length})
+        </button>
+        <button
+          onClick={() => { setActiveTab('orders'); fetchOrders(); }}
+          style={{
+            padding: '12px 30px',
+            border: 'none',
+            background: activeTab === 'orders' ? '#d35400' : 'transparent',
+            color: activeTab === 'orders' ? 'white' : '#666',
+            fontWeight: '600',
+            fontSize: '15px',
+            cursor: 'pointer',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s'
+          }}
+        >
+          Orders ({orders.length})
+        </button>
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {/* Orders Tab */}
+      {activeTab === 'orders' && (
+        <div className="products-table-container">
+          <h2>All Orders ({orders.length})</h2>
+          {orders.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#888', padding: '40px' }}>No orders found.</p>
+          ) : (
+            <div className="table-responsive">
+              <table className="products-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(order => (
+                    <tr key={order._id}>
+                      <td style={{ fontWeight: '600', fontSize: '13px' }}>{order.orderId}</td>
+                      <td>
+                        <div style={{ fontSize: '14px', fontWeight: '500' }}>{order.customerInfo?.name}</div>
+                        <div style={{ fontSize: '12px', color: '#888' }}>{order.customerInfo?.email}</div>
+                      </td>
+                      <td>{order.items?.length || 0} items</td>
+                      <td style={{ fontWeight: '600', color: '#d35400' }}>₹{order.totalAmount}</td>
+                      <td>
+                        <span style={{
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          background: order.paymentInfo?.status === 'completed' ? '#d4edda' : 
+                                     order.paymentInfo?.status === 'failed' ? '#f8d7da' : '#fff3cd',
+                          color: order.paymentInfo?.status === 'completed' ? '#155724' : 
+                                order.paymentInfo?.status === 'failed' ? '#721c24' : '#856404'
+                        }}>
+                          {order.paymentInfo?.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          background: `${getStatusColor(order.orderStatus)}20`,
+                          color: getStatusColor(order.orderStatus)
+                        }}>
+                          {order.orderStatus?.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '13px', color: '#666' }}>{formatDate(order.createdAt)}</td>
+                      <td>
+                        <Link
+                          to={`/order/${order.orderId}`}
+                          style={{
+                            padding: '6px 14px',
+                            background: '#d35400',
+                            color: 'white',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'inline-block'
+                          }}
+                        >
+                          Manage
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Products Tab */}
+      {activeTab === 'products' && (
+      <>
       <div className="admin-header">
         <h1>Product Management</h1>
         {!showForm && (
@@ -201,8 +365,6 @@ function AdminPanel() {
           </button>
         )}
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       {showForm && (
         <div className="product-form-container">
@@ -419,6 +581,8 @@ function AdminPanel() {
           </table>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

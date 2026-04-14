@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 
@@ -310,6 +310,20 @@ const Profile = () => {
                         Payment: <span className={order.paymentStatus}>{order.paymentStatus}</span>
                       </div>
                     )}
+                    <Link 
+                      to={`/order/${order.orderId || order._id}`} 
+                      className="view-details-link"
+                      style={{
+                        color: '#d35400',
+                        fontWeight: '600',
+                        textDecoration: 'none',
+                        fontSize: '14px',
+                        marginTop: '8px',
+                        display: 'inline-block'
+                      }}
+                    >
+                      View Details →
+                    </Link>
                   </div>
                 </div>
               ))}

@@ -237,7 +237,7 @@ const Checkout = () => {
           });
 
           await clearCart();
-          navigate(`/order-success/${order.orderId}`);
+          navigate(`/order/${order.orderId}`);
         } catch (err) {
           console.error('Payment verification error:', err);
           const errorMessage = err.message || 'Payment verification failed';
@@ -269,7 +269,7 @@ const Checkout = () => {
             if (status === 'completed') {
               console.log('Payment confirmed via polling after modal dismiss!');
               await clearCart();
-              navigate(`/order-success/${order.orderId}`);
+              navigate(`/order/${order.orderId}`);
             } else if (status === 'failed') {
               setError('Payment failed. Please try again.');
               setLoading(false);
@@ -314,7 +314,7 @@ const Checkout = () => {
         });
 
         await clearCart();
-        navigate(`/order-success/${order.orderId}`);
+        navigate(`/order/${order.orderId}`);
       } catch (err) {
         console.error('Stripe payment error:', err);
         const errorMessage = err.message || 'Payment processing failed';

@@ -65,10 +65,25 @@ export const cartAPI = {
 
 // Order API
 export const orderAPI = {
-  create: (data) => api.post('/orders', data),
+  create: (data) => {
+    const token = localStorage.getItem('token');
+    const config = token ? { headers: { 'Authorization': `Bearer ${token}` } } : {};
+    return api.post('/orders', data, config);
+  },
   getById: (orderId) => api.get(`/orders/${orderId}`),
   getAll: () => api.get('/orders'),
-  updateStatus: (orderId, data) => api.patch(`/orders/${orderId}/status`, data),
+  updateStatus: (orderId, data) => {
+    const token = localStorage.getItem('token');
+    return api.patch(`/orders/${orderId}/status`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+  updateDelivery: (orderId, data) => {
+    const token = localStorage.getItem('token');
+    return api.patch(`/orders/${orderId}/delivery`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
   initializePayment: (orderId, data) => api.post(`/orders/${orderId}/payment/initialize`, data),
   verifyPayment: (orderId, data) => api.post(`/orders/${orderId}/payment/verify`, data),
   checkPaymentStatus: (orderId) => api.get(`/orders/${orderId}/payment/status`)

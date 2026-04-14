@@ -259,9 +259,24 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/orders', auth, async (req, res) => {
   try {
     const Order = require('../models/Order');
-    const orders = await Order.find({ user: req.userId })
+    // Find orders linked by user ID or by customer email (for legacy orders without user field)
+    const orders = await Order.find({
+      $or: [
+        { user: req.userId },
+        { 'customerInfo.email': req.user.email }
+      ]
+    })
       .populate('items.product')
       .sort({ createdAt: -1 });
+
+    // Backfill: link any legacy orders (matched by email but missing user field) to this user
+    const legacyOrders = orders.filter(o => !o.user);
+    if (legacyOrders.length > 0) {
+      await Order.updateMany(
+        { _id: { $in: legacyOrders.map(o => o._id) } },
+        { $set: { user: req.userId } }
+      );
+    }
 
     res.json({
       success: true,

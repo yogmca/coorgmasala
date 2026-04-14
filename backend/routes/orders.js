@@ -4,9 +4,10 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const paymentService = require('../services/paymentService');
 const { v4: uuidv4 } = require('uuid');
+const { adminAuth, optionalAuth } = require('../middleware/auth');
 
 // Create new order
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { customerInfo, shippingAddress, items, paymentMethod } = req.body;
 
@@ -52,7 +53,7 @@ router.post('/', async (req, res) => {
     }
 
     // Create order
-    const order = await Order.create({
+    const orderData = {
       orderId: `ORD-${uuidv4().substring(0, 8).toUpperCase()}`,
       customerInfo,
       shippingAddress,
@@ -62,7 +63,14 @@ router.post('/', async (req, res) => {
         method: paymentMethod,
         status: 'pending'
       }
-    });
+    };
+
+    // Link order to authenticated user if available
+    if (req.userId) {
+      orderData.user = req.userId;
+    }
+
+    const order = await Order.create(orderData);
 
     res.status(201).json({
       success: true,
@@ -419,8 +427,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Update order status (Admin only - add auth middleware in production)
-router.patch('/:orderId/status', async (req, res) => {
+// Update order status (Admin only)
+router.patch('/:orderId/status', adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
     const order = await Order.findOne({ orderId: req.params.orderId });
@@ -435,11 +443,64 @@ router.patch('/:orderId/status', async (req, res) => {
     order.orderStatus = status;
     if (status === 'delivered') {
       order.deliveryDate = new Date();
+      if (!order.deliveryInfo) order.deliveryInfo = {};
+      order.deliveryInfo.deliveredAt = new Date();
+    }
+    if (status === 'shipped') {
+      if (!order.deliveryInfo) order.deliveryInfo = {};
+      order.deliveryInfo.shippedAt = new Date();
     }
     await order.save();
 
     res.json({
       success: true,
+      data: order
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update delivery info (Admin only)
+router.patch('/:orderId/delivery', adminAuth, async (req, res) => {
+  try {
+    const { trackingNumber, carrier, estimatedDelivery, notes, orderStatus } = req.body;
+    const order = await Order.findOne({ orderId: req.params.orderId });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Update delivery info fields
+    if (!order.deliveryInfo) order.deliveryInfo = {};
+    if (trackingNumber !== undefined) order.deliveryInfo.trackingNumber = trackingNumber;
+    if (carrier !== undefined) order.deliveryInfo.carrier = carrier;
+    if (estimatedDelivery !== undefined) order.deliveryInfo.estimatedDelivery = estimatedDelivery;
+    if (notes !== undefined) order.deliveryInfo.notes = notes;
+
+    // Update order status if provided
+    if (orderStatus) {
+      order.orderStatus = orderStatus;
+      if (orderStatus === 'shipped' && !order.deliveryInfo.shippedAt) {
+        order.deliveryInfo.shippedAt = new Date();
+      }
+      if (orderStatus === 'delivered') {
+        order.deliveryInfo.deliveredAt = new Date();
+        order.deliveryDate = new Date();
+      }
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Delivery information updated successfully',
       data: order
     });
   } catch (error) {

@@ -6,6 +6,11 @@ const orderSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true
+  },
   customerInfo: {
     name: {
       type: String,
@@ -86,8 +91,31 @@ const orderSchema = new mongoose.Schema({
   orderStatus: {
     type: String,
     required: true,
-    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+    enum: ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'],
     default: 'pending'
+  },
+  deliveryInfo: {
+    trackingNumber: {
+      type: String,
+      default: ''
+    },
+    carrier: {
+      type: String,
+      default: ''
+    },
+    estimatedDelivery: {
+      type: Date
+    },
+    shippedAt: {
+      type: Date
+    },
+    deliveredAt: {
+      type: Date
+    },
+    notes: {
+      type: String,
+      default: ''
+    }
   },
   deliveryDate: Date
 }, {
