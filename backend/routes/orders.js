@@ -3,6 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const paymentService = require('../services/paymentService');
+const { sendOrderConfirmationEmail } = require('../services/emailService');
 const { v4: uuidv4 } = require('uuid');
 const { adminAuth, optionalAuth } = require('../middleware/auth');
 
@@ -211,6 +212,11 @@ router.post('/:orderId/payment/verify', async (req, res) => {
 
     await order.save();
 
+    // Send order confirmation email (non-blocking)
+    sendOrderConfirmationEmail(order).catch(err => {
+      console.error('Email send error (payment verify):', err.message);
+    });
+
     res.json({
       success: true,
       message: 'Payment verified and order confirmed',
@@ -270,6 +276,11 @@ router.get('/:orderId/payment/status', async (req, res) => {
 
             await order.save();
             console.log(`✅ Payment confirmed via status check for order ${orderId}, payment: ${successfulPayment.id}`);
+
+            // Send order confirmation email (non-blocking)
+            sendOrderConfirmationEmail(order).catch(err => {
+              console.error('Email send error (status check):', err.message);
+            });
           }
         }
       } catch (rzpErr) {
@@ -359,6 +370,11 @@ router.post('/webhook/razorpay', async (req, res) => {
 
           await order.save();
           console.log(`✅ Webhook: Payment confirmed for order ${order.orderId}, payment: ${paymentId}`);
+
+          // Send order confirmation email (non-blocking)
+          sendOrderConfirmationEmail(order).catch(err => {
+            console.error('Email send error (webhook):', err.message);
+          });
         }
       }
     } else if (event === 'payment.failed') {
