@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
+import ReviewSection from '../components/ReviewSection';
 import './Home.css';
 
 const Home = () => {
@@ -204,9 +205,6 @@ const Home = () => {
                     <p className="product-description">{product.description}</p>
                     <div className="product-meta">
                       <span className="weight">{product.weight} {product.unit}</span>
-                      <span className="rating">
-                        ⭐ {product.ratings.average} ({product.ratings.count})
-                      </span>
                     </div>
                     <div className="product-footer">
                       <span className="price">₹{product.price}</span>
@@ -218,6 +216,7 @@ const Home = () => {
                         {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                       </button>
                     </div>
+                    <ReviewSection productId={product._id} productName={product.name} />
                   </div>
                 </div>
               ))}

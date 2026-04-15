@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api, { orderAPI } from '../services/api';
+import api, { orderAPI, reviewAPI } from '../services/api';
 import './AdminPanel.css';
 
 function AdminPanel() {
@@ -27,6 +27,10 @@ function AdminPanel() {
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [reviewFilter, setReviewFilter] = useState('');
+  const [editingReview, setEditingReview] = useState(null);
+  const [reviewFormData, setReviewFormData] = useState({ rating: 0, title: '', comment: '' });
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -56,6 +60,53 @@ function AdminPanel() {
     }
   }, []);
 
+  const fetchReviews = useCallback(async (ratingFilter) => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (ratingFilter) params.rating = ratingFilter;
+      const response = await reviewAPI.adminGetAll(params);
+      setReviews(response.data.data || []);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch reviews');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleAdminEditReview = (review) => {
+    setEditingReview(review);
+    setReviewFormData({
+      rating: review.rating,
+      title: review.title || '',
+      comment: review.comment
+    });
+  };
+
+  const handleAdminUpdateReview = async () => {
+    if (!editingReview) return;
+    try {
+      await reviewAPI.adminUpdate(editingReview._id, reviewFormData);
+      setEditingReview(null);
+      setReviewFormData({ rating: 0, title: '', comment: '' });
+      fetchReviews(reviewFilter);
+    } catch (err) {
+      setError(err.message || 'Failed to update review');
+    }
+  };
+
+  const handleAdminDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    try {
+      await reviewAPI.adminDelete(reviewId);
+      fetchReviews(reviewFilter);
+    } catch (err) {
+      setError(err.message || 'Failed to delete review');
+    }
+  };
+
   useEffect(() => {
     // Check if user is admin
     if (!user || user.role !== 'admin') {
@@ -64,7 +115,8 @@ function AdminPanel() {
     }
     fetchProducts();
     fetchOrders();
-  }, [user, navigate, fetchProducts, fetchOrders]);
+    fetchReviews();
+  }, [user, navigate, fetchProducts, fetchOrders, fetchReviews]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -260,6 +312,22 @@ function AdminPanel() {
           }}
         >
           Orders ({orders.length})
+        </button>
+        <button
+          onClick={() => { setActiveTab('reviews'); fetchReviews(); }}
+          style={{
+            padding: '12px 30px',
+            border: 'none',
+            background: activeTab === 'reviews' ? '#d35400' : 'transparent',
+            color: activeTab === 'reviews' ? 'white' : '#666',
+            fontWeight: '600',
+            fontSize: '15px',
+            cursor: 'pointer',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s'
+          }}
+        >
+          Reviews ({reviews.length})
         </button>
       </div>
 
@@ -582,6 +650,222 @@ function AdminPanel() {
         </div>
       </div>
       </>
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <div className="products-table-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+            <h2>All Reviews ({reviews.length})</h2>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <label style={{ fontSize: '13px', color: '#666' }}>Filter by rating:</label>
+              <select
+                value={reviewFilter}
+                onChange={(e) => { setReviewFilter(e.target.value); fetchReviews(e.target.value); }}
+                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+              >
+                <option value="">All Ratings</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+            </div>
+          </div>
+
+          {reviews.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#888', padding: '40px' }}>No reviews found.</p>
+          ) : (
+            <div>
+              {reviews.map(review => (
+                <div key={review._id} style={{
+                  background: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '10px',
+                  padding: '16px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {review.product?.image && (
+                        <img
+                          src={review.product.image}
+                          alt={review.product?.name}
+                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#333' }}>
+                          {review.product?.name || 'Unknown Product'}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#888' }}>
+                          by {review.user?.name || 'Unknown'} ({review.user?.email || ''})
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#f5a623', fontSize: '16px' }}>
+                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#999' }}>
+                        {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ margin: '10px 0' }}>
+                    {review.title && <h5 style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>{review.title}</h5>}
+                    <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '4px 0' }}>{review.comment}</p>
+                    {review.isEdited && (
+                      <span style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
+                        (edited{review.editedBy === 'admin' ? ' by admin' : ''})
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
+                    <button
+                      onClick={() => handleAdminEditReview(review)}
+                      style={{
+                        padding: '6px 16px',
+                        background: '#3498db',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleAdminDeleteReview(review._id)}
+                      style={{
+                        padding: '6px 16px',
+                        background: '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Admin Edit Review Modal */}
+          {editingReview && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000
+            }}>
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '24px',
+                width: '90%',
+                maxWidth: '500px',
+                maxHeight: '90vh',
+                overflowY: 'auto'
+              }}>
+                <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>Edit Review</h3>
+                <p style={{ fontSize: '13px', color: '#888', marginBottom: '15px' }}>
+                  Editing review by <strong>{editingReview.user?.name}</strong> for <strong>{editingReview.product?.name}</strong>
+                </p>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '5px' }}>Rating:</label>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <span
+                        key={star}
+                        onClick={() => setReviewFormData(prev => ({ ...prev, rating: star }))}
+                        style={{
+                          fontSize: '28px',
+                          cursor: 'pointer',
+                          color: star <= reviewFormData.rating ? '#f5a623' : '#ddd'
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '5px' }}>Title:</label>
+                  <input
+                    type="text"
+                    value={reviewFormData.title}
+                    onChange={(e) => setReviewFormData(prev => ({ ...prev, title: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    maxLength={100}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '5px' }}>Comment:</label>
+                  <textarea
+                    value={reviewFormData.comment}
+                    onChange={(e) => setReviewFormData(prev => ({ ...prev, comment: e.target.value }))}
+                    rows={4}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    maxLength={1000}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                  <button
+                    onClick={handleAdminUpdateReview}
+                    style={{
+                      padding: '10px 24px',
+                      background: '#3498db',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => { setEditingReview(null); setReviewFormData({ rating: 0, title: '', comment: '' }); }}
+                    style={{
+                      padding: '10px 24px',
+                      background: 'transparent',
+                      color: '#666',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

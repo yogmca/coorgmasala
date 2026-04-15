@@ -89,4 +89,75 @@ export const orderAPI = {
   checkPaymentStatus: (orderId) => api.get(`/orders/${orderId}/payment/status`)
 };
 
+// Review API
+export const reviewAPI = {
+  // Public - get reviews for a product
+  getProductReviews: (productId, params) => api.get(`/reviews/product/${productId}`, { params }),
+
+  // Authenticated - check if user can review a product
+  canReview: (productId) => {
+    const token = localStorage.getItem('token');
+    return api.get(`/reviews/can-review/${productId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Authenticated - get current user's reviews
+  getMyReviews: () => {
+    const token = localStorage.getItem('token');
+    return api.get('/reviews/my-reviews', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Authenticated - create a review
+  create: (data) => {
+    const token = localStorage.getItem('token');
+    return api.post('/reviews', data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Authenticated - update own review
+  update: (reviewId, data) => {
+    const token = localStorage.getItem('token');
+    return api.put(`/reviews/${reviewId}`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Authenticated - delete own review
+  delete: (reviewId) => {
+    const token = localStorage.getItem('token');
+    return api.delete(`/reviews/${reviewId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Admin - get all reviews
+  adminGetAll: (params) => {
+    const token = localStorage.getItem('token');
+    return api.get('/reviews/admin/all', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Admin - update a review
+  adminUpdate: (reviewId, data) => {
+    const token = localStorage.getItem('token');
+    return api.put(`/reviews/admin/${reviewId}`, data, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
+  // Admin - delete a review
+  adminDelete: (reviewId) => {
+    const token = localStorage.getItem('token');
+    return api.delete(`/reviews/admin/${reviewId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  }
+};
+
 export default api;

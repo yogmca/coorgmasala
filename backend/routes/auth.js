@@ -56,6 +56,7 @@ router.post('/signup', async (req, res) => {
       message: 'User registered successfully',
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
@@ -114,6 +115,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
@@ -168,6 +170,7 @@ router.post('/google', async (req, res) => {
       message: 'Google login successful',
       token,
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
@@ -235,6 +238,7 @@ router.put('/profile', auth, async (req, res) => {
       success: true,
       message: 'Profile updated successfully',
       user: {
+        _id: user._id,
         id: user._id,
         name: user.name,
         email: user.email,
