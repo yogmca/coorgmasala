@@ -129,6 +129,32 @@ const Home = () => {
         </div>
       </section>
 
+      <section className="delivery-section">
+        <div className="container">
+          <div className="delivery-content">
+            <div className="delivery-icon">🚚</div>
+            <h2>We Deliver Across India</h2>
+            <p className="delivery-description">
+              Coorg Masala delivers premium spices and coffee right to your doorstep across India. 
+              Enjoy fast and reliable shipping to all major cities and beyond.
+            </p>
+            <div className="delivery-cities">
+              <div className="city-tag"><span className="city-pin">📍</span> Chennai</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Mumbai</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Delhi</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Pune</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Hyderabad</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Kolkata</div>
+              <div className="city-tag"><span className="city-pin">📍</span> Bangalore</div>
+              <div className="city-tag city-tag-more">& many more cities...</div>
+            </div>
+            <p className="delivery-note">
+              Free shipping on orders above ₹500 | Delivery within 3-7 business days
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="products-section">
         <div className="container">
           <div className="filter-bar">

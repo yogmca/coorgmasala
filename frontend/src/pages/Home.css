@@ -329,6 +329,78 @@
   transform: translateY(-2px);
 }
 
+/* Delivery Across India Section */
+.delivery-section {
+  padding: 60px 0;
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+  text-align: center;
+}
+
+.delivery-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.delivery-icon {
+  font-size: 56px;
+  margin-bottom: 15px;
+}
+
+.delivery-content h2 {
+  font-size: 32px;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.delivery-description {
+  font-size: 16px;
+  color: var(--text-light);
+  line-height: 1.8;
+  margin-bottom: 30px;
+}
+
+.delivery-cities {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.city-tag {
+  background: white;
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.city-tag:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.city-pin {
+  margin-right: 4px;
+}
+
+.city-tag-more {
+  background: var(--primary-color);
+  color: white;
+  font-style: italic;
+}
+
+.delivery-note {
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: 600;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .exporter-content {
     grid-template-columns: 1fr;
@@ -358,6 +430,24 @@
   .cert-text {
     font-size: 13px;
   }
+
+  .delivery-content h2 {
+    font-size: 24px;
+  }
+
+  .delivery-description {
+    font-size: 14px;
+  }
+
+  .city-tag {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .delivery-icon {
+    font-size: 40px;
+  }
+
   .hero-content h1 {
     font-size: 32px;
   }
