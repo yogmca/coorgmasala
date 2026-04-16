@@ -109,7 +109,7 @@ const Export = () => {
 
               <div className="contact-details">
                 <h3>Contact Information</h3>
-                <p><strong>Email:</strong> yogemca@gmail.com</p>
+                <p><strong>Email:</strong> support@coorgmasala.com</p>
                 <p><strong>Company:</strong> Coorg Masala Private Limited</p>
                 <p><strong>Location:</strong> Coorg, India</p>
               </div>

@@ -29,15 +29,15 @@ router.post('/export', async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER || 'yogemca@gmail.com',
+        user: process.env.EMAIL_USER || 'support@coorgmasala.com',
         pass: process.env.EMAIL_PASSWORD // App-specific password required
       }
     });
 
     // Email content
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'yogemca@gmail.com',
-      to: 'yogemca@gmail.com',
+      from: process.env.EMAIL_USER || 'support@coorgmasala.com',
+      to: 'support@coorgmasala.com',
       subject: `Export Inquiry from ${name} - ${country}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -107,13 +107,13 @@ Received on: ${new Date().toLocaleString()}
     if (error.code === 'EAUTH') {
       return res.status(500).json({
         success: false,
-        message: 'Email service configuration error. Please contact support directly at yogemca@gmail.com'
+        message: 'Email service configuration error. Please contact support directly at support@coorgmasala.com'
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Failed to send inquiry. Please try again or contact us directly at yogemca@gmail.com'
+      message: 'Failed to send inquiry. Please try again or contact us directly at support@coorgmasala.com'
     });
   }
 });
