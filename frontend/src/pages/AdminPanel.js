@@ -31,6 +31,8 @@ function AdminPanel() {
   const [reviewFilter, setReviewFilter] = useState('');
   const [editingReview, setEditingReview] = useState(null);
   const [reviewFormData, setReviewFormData] = useState({ rating: 0, title: '', comment: '' });
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [reviewSubTab, setReviewSubTab] = useState('pending');
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -70,6 +72,20 @@ function AdminPanel() {
       setError('');
     } catch (err) {
       setError('Failed to fetch reviews');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchPendingReviews = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await reviewAPI.adminGetPending();
+      setPendingReviews(response.data.data || []);
+      setError('');
+    } catch (err) {
+      setError('Failed to fetch pending reviews');
       console.error(err);
     } finally {
       setLoading(false);
@@ -116,7 +132,8 @@ function AdminPanel() {
     fetchProducts();
     fetchOrders();
     fetchReviews();
-  }, [user, navigate, fetchProducts, fetchOrders, fetchReviews]);
+    fetchPendingReviews();
+  }, [user, navigate, fetchProducts, fetchOrders, fetchReviews, fetchPendingReviews]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -314,7 +331,7 @@ function AdminPanel() {
           Orders ({orders.length})
         </button>
         <button
-          onClick={() => { setActiveTab('reviews'); fetchReviews(); }}
+          onClick={() => { setActiveTab('reviews'); fetchReviews(); fetchPendingReviews(); }}
           style={{
             padding: '12px 30px',
             border: 'none',
@@ -327,7 +344,7 @@ function AdminPanel() {
             transition: 'all 0.2s'
           }}
         >
-          Reviews ({reviews.length})
+          Reviews ({reviews.length}{pendingReviews.length > 0 ? ` + ${pendingReviews.length} pending` : ''})
         </button>
       </div>
 
@@ -655,110 +672,249 @@ function AdminPanel() {
       {/* Reviews Tab */}
       {activeTab === 'reviews' && (
         <div className="products-table-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-            <h2>All Reviews ({reviews.length})</h2>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <label style={{ fontSize: '13px', color: '#666' }}>Filter by rating:</label>
-              <select
-                value={reviewFilter}
-                onChange={(e) => { setReviewFilter(e.target.value); fetchReviews(e.target.value); }}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
-              >
-                <option value="">All Ratings</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
-              </select>
-            </div>
+          {/* Sub-tabs for Pending and Submitted Reviews */}
+          <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid #e0e0e0' }}>
+            <button
+              onClick={() => setReviewSubTab('pending')}
+              style={{
+                padding: '10px 24px',
+                border: 'none',
+                background: reviewSubTab === 'pending' ? '#e67e22' : 'transparent',
+                color: reviewSubTab === 'pending' ? 'white' : '#666',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                borderRadius: '6px 6px 0 0',
+                transition: 'all 0.2s'
+              }}
+            >
+              Pending Reviews ({pendingReviews.length})
+            </button>
+            <button
+              onClick={() => setReviewSubTab('submitted')}
+              style={{
+                padding: '10px 24px',
+                border: 'none',
+                background: reviewSubTab === 'submitted' ? '#e67e22' : 'transparent',
+                color: reviewSubTab === 'submitted' ? 'white' : '#666',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                borderRadius: '6px 6px 0 0',
+                transition: 'all 0.2s'
+              }}
+            >
+              Submitted Reviews ({reviews.length})
+            </button>
           </div>
 
-          {reviews.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#888', padding: '40px' }}>No reviews found.</p>
-          ) : (
+          {/* Pending Reviews Sub-tab */}
+          {reviewSubTab === 'pending' && (
             <div>
-              {reviews.map(review => (
-                <div key={review._id} style={{
-                  background: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '10px',
-                  padding: '16px',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {review.product?.image && (
-                        <img
-                          src={review.product.image}
-                          alt={review.product?.name}
-                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                      )}
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#333' }}>
-                          {review.product?.name || 'Unknown Product'}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#888' }}>
-                          by {review.user?.name || 'Unknown'} ({review.user?.email || ''})
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ color: '#f5a623', fontSize: '16px' }}>
-                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#999' }}>
-                        {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </div>
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2 style={{ margin: 0 }}>Products Awaiting Review ({pendingReviews.length})</h2>
+                <button
+                  onClick={fetchPendingReviews}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Refresh
+                </button>
+              </div>
+              <p style={{ fontSize: '13px', color: '#888', marginBottom: '15px' }}>
+                These are products from delivered orders that have not yet been reviewed by customers.
+              </p>
 
-                  <div style={{ margin: '10px 0' }}>
-                    {review.title && <h5 style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>{review.title}</h5>}
-                    <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '4px 0' }}>{review.comment}</p>
-                    {review.isEdited && (
-                      <span style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
-                        (edited{review.editedBy === 'admin' ? ' by admin' : ''})
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
-                    <button
-                      onClick={() => handleAdminEditReview(review)}
-                      style={{
-                        padding: '6px 16px',
-                        background: '#3498db',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleAdminDeleteReview(review._id)}
-                      style={{
-                        padding: '6px 16px',
-                        background: '#e74c3c',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
+              {pendingReviews.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
+                  No pending reviews. All delivered order products have been reviewed!
+                </p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="products-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Customer</th>
+                        <th>Order ID</th>
+                        <th>Qty</th>
+                        <th>Delivered</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingReviews.map((item, index) => (
+                        <tr key={`${item.orderObjectId}-${item.product._id}-${index}`}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {item.product.image && (
+                                <img
+                                  src={item.product.image}
+                                  alt={item.product.name}
+                                  style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }}
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              )}
+                              <div>
+                                <div style={{ fontWeight: '600', fontSize: '13px' }}>{item.product.name}</div>
+                                <div style={{ fontSize: '11px', color: '#888' }}>₹{item.product.price}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '13px', fontWeight: '500' }}>{item.customer?.name || 'N/A'}</div>
+                            <div style={{ fontSize: '11px', color: '#888' }}>{item.customer?.email || ''}</div>
+                          </td>
+                          <td style={{ fontSize: '13px', fontWeight: '600' }}>{item.orderId}</td>
+                          <td style={{ fontSize: '13px' }}>{item.quantity}</td>
+                          <td style={{ fontSize: '12px', color: '#666' }}>
+                            {item.deliveredAt ? new Date(item.deliveredAt).toLocaleDateString('en-IN', {
+                              day: 'numeric', month: 'short', year: 'numeric'
+                            }) : 'N/A'}
+                          </td>
+                          <td>
+                            <Link
+                              to={`/order/${item.orderId}`}
+                              style={{
+                                padding: '5px 12px',
+                                background: '#d35400',
+                                color: 'white',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                display: 'inline-block'
+                              }}
+                            >
+                              View Order
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
+              )}
+            </div>
+          )}
+
+          {/* Submitted Reviews Sub-tab */}
+          {reviewSubTab === 'submitted' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                <h2>All Reviews ({reviews.length})</h2>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '13px', color: '#666' }}>Filter by rating:</label>
+                  <select
+                    value={reviewFilter}
+                    onChange={(e) => { setReviewFilter(e.target.value); fetchReviews(e.target.value); }}
+                    style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                  >
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                  </select>
+                </div>
+              </div>
+
+              {reviews.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#888', padding: '40px' }}>No reviews found.</p>
+              ) : (
+                <div>
+                  {reviews.map(review => (
+                    <div key={review._id} style={{
+                      background: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {review.product?.image && (
+                            <img
+                              src={review.product.image}
+                              alt={review.product?.name}
+                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          )}
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '14px', color: '#333' }}>
+                              {review.product?.name || 'Unknown Product'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#888' }}>
+                              by {review.user?.name || 'Unknown'} ({review.user?.email || ''})
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ color: '#f5a623', fontSize: '16px' }}>
+                            {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#999' }}>
+                            {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ margin: '10px 0' }}>
+                        {review.title && <h5 style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>{review.title}</h5>}
+                        <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '4px 0' }}>{review.comment}</p>
+                        {review.isEdited && (
+                          <span style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
+                            (edited{review.editedBy === 'admin' ? ' by admin' : ''})
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
+                        <button
+                          onClick={() => handleAdminEditReview(review)}
+                          style={{
+                            padding: '6px 16px',
+                            background: '#3498db',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleAdminDeleteReview(review._id)}
+                          style={{
+                            padding: '6px 16px',
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

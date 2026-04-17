@@ -342,6 +342,73 @@ router.delete('/:reviewId', auth, async (req, res) => {
 // ADMIN ROUTES
 // ============================================
 
+// GET /api/reviews/admin/pending - Get delivered orders with products pending review (admin)
+router.get('/admin/pending', adminAuth, async (req, res) => {
+  try {
+    // Find all delivered orders
+    const deliveredOrders = await Order.find({ orderStatus: 'delivered' })
+      .populate('items.product', 'name image price')
+      .populate('user', 'name email')
+      .sort('-updatedAt');
+
+    // Get all existing reviews
+    const allReviews = await Review.find({}).select('product user order');
+
+    // Build a set of "productId-orderId" combos that have been reviewed
+    const reviewedSet = new Set(
+      allReviews.map(r => `${r.product.toString()}-${r.order.toString()}`)
+    );
+
+    // Build list of products pending review from delivered orders
+    const pendingReviews = [];
+    for (const order of deliveredOrders) {
+      for (const item of order.items) {
+        const productId = item.product?._id || item.product;
+        const key = `${productId.toString()}-${order._id.toString()}`;
+        if (!reviewedSet.has(key)) {
+          pendingReviews.push({
+            orderId: order.orderId,
+            orderObjectId: order._id,
+            orderDate: order.createdAt,
+            deliveredAt: order.deliveryInfo?.deliveredAt || order.updatedAt,
+            customer: order.user ? {
+              name: order.user.name,
+              email: order.user.email
+            } : {
+              name: order.customerInfo?.name,
+              email: order.customerInfo?.email
+            },
+            product: item.product?._id ? {
+              _id: item.product._id,
+              name: item.product.name,
+              image: item.product.image,
+              price: item.product.price
+            } : {
+              _id: productId,
+              name: item.name,
+              image: null,
+              price: item.price
+            },
+            quantity: item.quantity
+          });
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      data: pendingReviews,
+      total: pendingReviews.length
+    });
+  } catch (error) {
+    console.error('Error fetching pending reviews:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch pending reviews'
+    });
+  }
+});
+
 // GET /api/reviews/admin/all - Get all reviews (admin)
 router.get('/admin/all', adminAuth, async (req, res) => {
   try {

@@ -143,6 +143,14 @@ export const reviewAPI = {
     });
   },
 
+  // Admin - get delivered orders with products pending review
+  adminGetPending: () => {
+    const token = localStorage.getItem('token');
+    return api.get('/reviews/admin/pending', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+
   // Admin - update a review
   adminUpdate: (reviewId, data) => {
     const token = localStorage.getItem('token');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../services/api';
+import { orderAPI, reviewAPI } from '../services/api';
 import './OrderDetails.css';
 
 const OrderDetails = () => {
@@ -13,6 +13,11 @@ const OrderDetails = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [updating, setUpdating] = useState(false);
+
+  // Review state
+  const [reviewItems, setReviewItems] = useState({}); // { productId: { canReview, existingReview } }
+  const [reviewForms, setReviewForms] = useState({}); // { productId: { rating, title, comment, submitting } }
+  const [reviewSuccess, setReviewSuccess] = useState('');
 
   // Admin delivery form state
   const [deliveryForm, setDeliveryForm] = useState({
@@ -73,11 +78,121 @@ const OrderDetails = () => {
     }
   }, [orderId]);
 
+  // Check which items can be reviewed (for delivered orders)
+  const checkReviewEligibility = useCallback(async (orderData) => {
+    if (!user || !orderData || orderData.orderStatus !== 'delivered') return;
+    
+    const items = orderData.items || [];
+    const reviewStatus = {};
+    
+    for (const item of items) {
+      const productId = item.product?._id || item.product;
+      if (!productId) continue;
+      
+      try {
+        const response = await reviewAPI.canReview(productId);
+        // Check if this specific order is in the reviewable orders
+        const canReviewThisOrder = response.data.reviewableOrders?.some(
+          o => o._id === orderData._id
+        );
+        reviewStatus[productId] = {
+          canReview: canReviewThisOrder || false,
+          existingReviewCount: response.data.existingReviewCount || 0
+        };
+      } catch (err) {
+        console.error('Error checking review eligibility for product:', productId, err);
+        reviewStatus[productId] = { canReview: false, existingReviewCount: 0 };
+      }
+    }
+    
+    setReviewItems(reviewStatus);
+  }, [user]);
+
+  const handleReviewFormChange = (productId, field, value) => {
+    setReviewForms(prev => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [field]: value
+      }
+    }));
+  };
+
+  const toggleReviewForm = (productId) => {
+    setReviewForms(prev => {
+      if (prev[productId]?.visible) {
+        const { [productId]: _, ...rest } = prev;
+        return rest;
+      }
+      return {
+        ...prev,
+        [productId]: { rating: 0, title: '', comment: '', visible: true, submitting: false }
+      };
+    });
+  };
+
+  const handleSubmitReview = async (productId) => {
+    const form = reviewForms[productId];
+    if (!form) return;
+
+    if (form.rating === 0) {
+      setError('Please select a rating');
+      return;
+    }
+    if (!form.comment?.trim()) {
+      setError('Please write a review comment');
+      return;
+    }
+
+    setReviewForms(prev => ({
+      ...prev,
+      [productId]: { ...prev[productId], submitting: true }
+    }));
+
+    try {
+      await reviewAPI.create({
+        productId,
+        orderId: order._id,
+        rating: form.rating,
+        title: form.title || '',
+        comment: form.comment
+      });
+
+      setReviewSuccess(`Review submitted successfully!`);
+      setTimeout(() => setReviewSuccess(''), 3000);
+
+      // Close form and refresh eligibility
+      setReviewForms(prev => {
+        const { [productId]: _, ...rest } = prev;
+        return rest;
+      });
+      
+      // Update review status for this product
+      setReviewItems(prev => ({
+        ...prev,
+        [productId]: { ...prev[productId], canReview: false }
+      }));
+    } catch (err) {
+      setError(err.message || 'Failed to submit review');
+    } finally {
+      setReviewForms(prev => ({
+        ...prev,
+        [productId]: prev[productId] ? { ...prev[productId], submitting: false } : undefined
+      }));
+    }
+  };
+
   useEffect(() => {
     if (orderId) {
       fetchOrder();
     }
   }, [orderId, fetchOrder]);
+
+  useEffect(() => {
+    if (order && order.orderStatus === 'delivered' && user) {
+      checkReviewEligibility(order);
+    }
+  }, [order, user, checkReviewEligibility]);
 
   const handleDeliveryFormChange = (e) => {
     setDeliveryForm({
@@ -331,6 +446,179 @@ const OrderDetails = () => {
             <span className="total-amount">₹{order.totalAmount}</span>
           </div>
         </div>
+
+        {/* Review Section for Delivered Orders */}
+        {order.orderStatus === 'delivered' && user && !isAdmin && (
+          <div className="order-items-card" style={{ marginTop: '20px' }}>
+            <h3>Review Your Products</h3>
+            {reviewSuccess && (
+              <div style={{
+                padding: '10px 16px',
+                background: '#d4edda',
+                color: '#155724',
+                borderRadius: '8px',
+                marginBottom: '15px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                {reviewSuccess}
+              </div>
+            )}
+            <p style={{ fontSize: '13px', color: '#888', marginBottom: '15px' }}>
+              Your order has been delivered! Share your experience by reviewing the products.
+            </p>
+            {order.items?.map((item, index) => {
+              const productId = item.product?._id || item.product;
+              const reviewStatus = reviewItems[productId];
+              const form = reviewForms[productId];
+
+              return (
+                <div key={index} style={{
+                  padding: '14px',
+                  border: '1px solid #e8e8e8',
+                  borderRadius: '10px',
+                  marginBottom: '12px',
+                  background: '#fafafa'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img
+                        src={getImageUrl(item.product?.image || '')}
+                        alt={item.name}
+                        style={{ width: '45px', height: '45px', borderRadius: '8px', objectFit: 'cover' }}
+                        onError={(e) => {
+                          if (!e.target.src.includes('placeholder')) {
+                            e.target.src = 'https://via.placeholder.com/45x45?text=' + encodeURIComponent(item.name || 'Product');
+                          }
+                        }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#333' }}>{item.name}</div>
+                        <div style={{ fontSize: '12px', color: '#888' }}>Qty: {item.quantity} × ₹{item.price}</div>
+                      </div>
+                    </div>
+                    {reviewStatus?.canReview ? (
+                      <button
+                        onClick={() => toggleReviewForm(productId)}
+                        style={{
+                          padding: '8px 18px',
+                          background: form?.visible ? '#95a5a6' : '#d35400',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {form?.visible ? 'Cancel' : 'Write Review'}
+                      </button>
+                    ) : (
+                      <span style={{
+                        padding: '6px 14px',
+                        background: '#d4edda',
+                        color: '#155724',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        Reviewed
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Review Form */}
+                  {form?.visible && (
+                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #e0e0e0' }}>
+                      <div style={{ marginBottom: '12px' }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '6px' }}>Rating *</label>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span
+                              key={star}
+                              onClick={() => handleReviewFormChange(productId, 'rating', star)}
+                              style={{
+                                fontSize: '28px',
+                                cursor: 'pointer',
+                                color: star <= (form.rating || 0) ? '#f5a623' : '#ddd',
+                                transition: 'color 0.15s'
+                              }}
+                            >
+                              ★
+                            </span>
+                          ))}
+                          {form.rating > 0 && (
+                            <span style={{ fontSize: '13px', color: '#888', marginLeft: '8px', alignSelf: 'center' }}>
+                              {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][form.rating]}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '12px' }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '6px' }}>Title (optional)</label>
+                        <input
+                          type="text"
+                          value={form.title || ''}
+                          onChange={(e) => handleReviewFormChange(productId, 'title', e.target.value)}
+                          placeholder="Summarize your review"
+                          maxLength={100}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #ddd',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ marginBottom: '12px' }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#555', marginBottom: '6px' }}>Your Review *</label>
+                        <textarea
+                          value={form.comment || ''}
+                          onChange={(e) => handleReviewFormChange(productId, 'comment', e.target.value)}
+                          placeholder="Share your experience with this product..."
+                          rows={3}
+                          maxLength={1000}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #ddd',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            fontFamily: 'inherit',
+                            boxSizing: 'border-box',
+                            resize: 'vertical'
+                          }}
+                        />
+                        <small style={{ color: '#999', fontSize: '11px' }}>{(form.comment || '').length}/1000</small>
+                      </div>
+
+                      <button
+                        onClick={() => handleSubmitReview(productId)}
+                        disabled={form.submitting}
+                        style={{
+                          padding: '10px 24px',
+                          background: form.submitting ? '#bdc3c7' : '#27ae60',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: form.submitting ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {form.submitting ? 'Submitting...' : 'Submit Review'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Delivery Information (visible to all) */}
         {order.deliveryInfo && (order.deliveryInfo.trackingNumber || order.deliveryInfo.carrier || order.deliveryInfo.estimatedDelivery) && (
