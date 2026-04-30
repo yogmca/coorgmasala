@@ -52,8 +52,9 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
     } catch (error) {
       console.error('Error loading user:', error);
-      // If token is invalid, clear it
+      // If token is invalid or expired, clear it
       if (error.response?.status === 401) {
+        console.log('Token invalid or expired, logging out...');
         logout();
       }
     } finally {
@@ -173,6 +174,10 @@ export const AuthProvider = ({ children }) => {
       return response.data.orders;
     } catch (error) {
       console.error('Error fetching orders:', error);
+      // If token expired, logout
+      if (error.response?.status === 401 && error.response?.data?.expired) {
+        logout();
+      }
       return [];
     }
   };

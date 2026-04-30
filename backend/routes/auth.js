@@ -9,7 +9,7 @@ const generateToken = (userId) => {
   return jwt.sign(
     { userId },
     process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-    { expiresIn: '7d' }
+    { expiresIn: '30d' } // Extended to 30 days for better user experience
   );
 };
 

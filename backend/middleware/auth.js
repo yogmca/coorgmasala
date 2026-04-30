@@ -32,10 +32,31 @@ const auth = async (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (error) {
+    // Handle specific JWT errors
+    if (error.name === 'TokenExpiredError') {
+      console.log('Token expired at:', error.expiredAt);
+      return res.status(401).json({
+        success: false,
+        error: 'Token has expired',
+        expired: true,
+        message: 'Your session has expired. Please login again.'
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      console.error('Invalid token:', error.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'Authentication token is invalid. Please login again.'
+      });
+    }
+    
     console.error('Auth middleware error:', error);
     res.status(401).json({
       success: false,
-      error: 'Token is not valid'
+      error: 'Authentication failed',
+      message: 'Token verification failed. Please login again.'
     });
   }
 };
@@ -56,6 +77,10 @@ const optionalAuth = async (req, res, next) => {
     }
     next();
   } catch (error) {
+    // Log expired tokens but continue without auth
+    if (error.name === 'TokenExpiredError') {
+      console.log('Optional auth: Token expired, continuing without authentication');
+    }
     // Continue without auth
     next();
   }
@@ -100,10 +125,31 @@ const adminAuth = async (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (error) {
+    // Handle specific JWT errors
+    if (error.name === 'TokenExpiredError') {
+      console.log('Admin token expired at:', error.expiredAt);
+      return res.status(401).json({
+        success: false,
+        error: 'Token has expired',
+        expired: true,
+        message: 'Your session has expired. Please login again.'
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      console.error('Invalid admin token:', error.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'Authentication token is invalid. Please login again.'
+      });
+    }
+    
     console.error('Admin auth middleware error:', error);
     res.status(401).json({
       success: false,
-      error: 'Token is not valid'
+      error: 'Authentication failed',
+      message: 'Token verification failed. Please login again.'
     });
   }
 };

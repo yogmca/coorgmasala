@@ -23,11 +23,23 @@ api.interceptors.response.use(
       message: error.response?.data?.error || error.message
     });
     
+    // Handle token expiration
+    if (error.response?.status === 401 && error.response?.data?.expired) {
+      console.warn('Token expired, clearing authentication...');
+      localStorage.removeItem('token');
+      
+      // Redirect to login page if not already there
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+        window.location.href = '/login?expired=true';
+      }
+    }
+    
     // Return a consistent error structure
     return Promise.reject({
       message: error.response?.data?.error || error.message || 'An error occurred',
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
+      expired: error.response?.data?.expired || false
     });
   }
 );
