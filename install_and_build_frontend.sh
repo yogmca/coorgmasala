@@ -5,9 +5,9 @@ echo "📦 Installing missing frontend dependencies..."
 
 cd /home/ubuntu/coorg-spices/frontend
 
-# Install react-helmet-async (missing dependency)
-echo "Installing react-helmet-async..."
-npm install react-helmet-async
+# Install missing dependencies
+echo "Installing missing dependencies..."
+npm install react-helmet-async jwt-decode
 
 # Install all dependencies to be safe
 echo "Installing all dependencies..."
