@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://coorgmasala.com/</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://coorgmasala.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://coorgmasala.com/de/" />
+  </url>
+
+  <!-- Products Page -->
+  <url>
+    <loc>https://coorgmasala.com/products</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Export Page -->
+  <url>
+    <loc>https://coorgmasala.com/export</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- About Page -->
+  <url>
+    <loc>https://coorgmasala.com/about</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contact Page -->
+  <url>
+    <loc>https://coorgmasala.com/contact</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Individual Product Pages -->
+  
+  <!-- Organic Cardamom -->
+  <url>
+    <loc>https://coorgmasala.com/products/cardamom</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/cardamom.jpg</image:loc>
+      <image:title>Organic Green Cardamom from Coorg</image:title>
+      <image:caption>Premium organic cardamom for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Organic Black Pepper -->
+  <url>
+    <loc>https://coorgmasala.com/products/black-pepper</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/black-pepper.jpg</image:loc>
+      <image:title>Organic Black Pepper from Coorg</image:title>
+      <image:caption>Premium Coorg black pepper for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Organic Turmeric -->
+  <url>
+    <loc>https://coorgmasala.com/products/turmeric</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/turmeric.jpg</image:loc>
+      <image:title>Organic Turmeric Powder from India</image:title>
+      <image:caption>Premium organic turmeric for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Organic Cinnamon -->
+  <url>
+    <loc>https://coorgmasala.com/products/cinnamon</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/cinnamon.jpg</image:loc>
+      <image:title>Organic Cinnamon from India</image:title>
+      <image:caption>Premium organic cinnamon for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Premium Coorg Coffee -->
+  <url>
+    <loc>https://coorgmasala.com/products/coffee</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/coffee.jpg</image:loc>
+      <image:title>Premium Coorg Coffee Beans</image:title>
+      <image:caption>Authentic organic Coorg coffee for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Organic Ginger -->
+  <url>
+    <loc>https://coorgmasala.com/products/ginger</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://coorgmasala.com/images/ginger.jpg</image:loc>
+      <image:title>Organic Ginger from India</image:title>
+      <image:caption>Fresh organic ginger for export</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Market-specific Pages -->
+  
+  <!-- Export to Germany -->
+  <url>
+    <loc>https://coorgmasala.com/export/germany</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://coorgmasala.com/de/export/germany" />
+  </url>
+
+  <!-- Export to Europe -->
+  <url>
+    <loc>https://coorgmasala.com/export/europe</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Export to USA -->
+  <url>
+    <loc>https://coorgmasala.com/export/usa</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Export to Dubai -->
+  <url>
+    <loc>https://coorgmasala.com/export/dubai</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Category Pages -->
+  
+  <!-- Organic Spices Category -->
+  <url>
+    <loc>https://coorgmasala.com/category/organic-spices</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Coffee Category -->
+  <url>
+    <loc>https://coorgmasala.com/category/coffee</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Premium Spices Category -->
+  <url>
+    <loc>https://coorgmasala.com/category/premium-spices</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Coorg Masala Category -->
+  <url>
+    <loc>https://coorgmasala.com/category/coorg-masala</loc>
+    <lastmod>2026-04-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

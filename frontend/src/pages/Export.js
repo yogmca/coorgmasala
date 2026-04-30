@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
+import SEOHelmet from '../components/SEOHelmet';
+import { generateMetaTags } from '../seo/seo-config';
+import { seoContent } from '../seo/content';
 import './Export.css';
 
 const Export = () => {
+  const seoData = generateMetaTags('export');
+  const exportContent = seoContent.export;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -74,10 +79,19 @@ const Export = () => {
 
   return (
     <div className="export-page">
+      <SEOHelmet
+        title={seoData.title}
+        description={seoData.meta.find(m => m.name === 'description')?.content}
+        keywords={seoData.meta.find(m => m.name === 'keywords')?.content}
+        canonicalUrl="/export"
+        schema={seoData.schema}
+      />
+      
       <section className="export-hero">
         <div className="container">
-          <h1>Export Inquiries</h1>
-          <p>Connect with us for premium quality Indian spices export</p>
+          <h1>{exportContent.hero.h1}</h1>
+          <p>{exportContent.hero.subtitle}</p>
+          <p className="hero-description">{exportContent.hero.description}</p>
         </div>
       </section>
 

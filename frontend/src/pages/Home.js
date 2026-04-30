@@ -3,9 +3,14 @@ import { Link } from 'react-router-dom';
 import { productAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
 import ReviewSection from '../components/ReviewSection';
+import SEOHelmet from '../components/SEOHelmet';
+import { generateMetaTags } from '../seo/seo-config';
+import { seoContent } from '../seo/content';
 import './Home.css';
 
 const Home = () => {
+  const seoData = generateMetaTags('home');
+  const homeContent = seoContent.homepage;
   // SVG placeholder as data URI (no external dependency)
   const getPlaceholderImage = (text) => {
     const svg = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
@@ -77,15 +82,23 @@ const Home = () => {
 
   return (
     <div className="home">
+      <SEOHelmet
+        title={seoData.title}
+        description={seoData.meta.find(m => m.name === 'description')?.content}
+        keywords={seoData.meta.find(m => m.name === 'keywords')?.content}
+        canonicalUrl="/"
+        schema={seoData.schema}
+      />
+      
       {notification && (
         <div className="notification">{notification}</div>
       )}
 
       <section className="hero">
         <div className="hero-content">
-          <h1>Premium Coorg Masala</h1>
-          <p>Authentic Indian spices and coffee from the heart of Coorg</p>
-          <p className="hero-subtitle">Direct from plantations to your kitchen</p>
+          <h1>{homeContent.hero.h1}</h1>
+          <p>{homeContent.hero.subtitle}</p>
+          <p className="hero-subtitle">{homeContent.hero.description}</p>
         </div>
       </section>
 

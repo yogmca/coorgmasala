@@ -1,0 +1,31 @@
+# robots.txt for Coorg Masala & Coffee
+# Premium Organic Indian Spices and Coffee Exporter
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Disallow admin and checkout pages from indexing
+Disallow: /admin
+Disallow: /checkout
+Disallow: /profile
+Disallow: /order-success
+
+# Sitemap location
+Sitemap: https://coorgmasala.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
