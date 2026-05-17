@@ -4,21 +4,13 @@ import { useCart } from '../context/CartContext';
 import './Cart.css';
 
 const Cart = () => {
-  // Get the base URL for images (remove /api from the API URL)
+  // Get the base URL for images - always use production server
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/100x100?text=No+Image';
     if (imagePath.startsWith('http')) return imagePath;
     
-    // Get API URL from env or use current origin for production
-    let baseUrl;
-    if (process.env.REACT_APP_API_URL) {
-      baseUrl = process.env.REACT_APP_API_URL.replace('/api', '');
-    } else if (window.location.hostname === 'localhost') {
-      baseUrl = 'http://localhost:5000';
-    } else {
-      // Production: use same domain
-      baseUrl = window.location.origin;
-    }
+    // Always use production server for images (where files are stored)
+    const baseUrl = 'https://coorgmasala.com';
     
     return `${baseUrl}${imagePath}`;
   };

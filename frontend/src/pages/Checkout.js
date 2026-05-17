@@ -32,6 +32,114 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Major Indian cities with ₹50 delivery charge
+  const majorCities = [
+    'bangalore', 'bengaluru', 'mumbai', 'delhi', 'new delhi', 'chennai',
+    'kolkata', 'hyderabad', 'pune', 'ahmedabad', 'surat', 'jaipur',
+    'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal',
+    'visakhapatnam', 'pimpri-chinchwad', 'patna', 'vadodara', 'ghaziabad',
+    'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot',
+    'kalyan-dombivali', 'vasai-virar', 'varanasi', 'srinagar', 'aurangabad',
+    'dhanbad', 'amritsar', 'navi mumbai', 'allahabad', 'prayagraj',
+    'ranchi', 'howrah', 'coimbatore', 'jabalpur', 'gwalior', 'vijayawada',
+    'jodhpur', 'madurai', 'raipur', 'kota', 'chandigarh', 'guwahati'
+  ];
+
+  // Indian states for autocomplete
+  const indianStates = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+    'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+  ];
+
+  // Calculate delivery charges
+  const calculateDeliveryCharges = () => {
+    const subtotal = getCartTotal();
+    if (subtotal > 500) {
+      return 0; // Free delivery for orders > ₹500
+    }
+    
+    const city = formData.city.toLowerCase().trim();
+    if (majorCities.includes(city)) {
+      return 50; // ₹50 for major cities
+    }
+    return 100; // ₹100 for other cities
+  };
+
+  // Calculate total with delivery charges
+  const calculateTotal = () => {
+    return getCartTotal() + calculateDeliveryCharges();
+  };
+
+  // State for autocomplete
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [stateSuggestions, setStateSuggestions] = useState([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showStateSuggestions, setShowStateSuggestions] = useState(false);
+
+  // Major Indian cities for autocomplete
+  const indianCities = [
+    'Bangalore', 'Bengaluru', 'Mumbai', 'Delhi', 'New Delhi', 'Chennai',
+    'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad', 'Surat', 'Jaipur',
+    'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal',
+    'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara', 'Ghaziabad',
+    'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot',
+    'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi', 'Srinagar', 'Aurangabad',
+    'Dhanbad', 'Amritsar', 'Navi Mumbai', 'Allahabad', 'Prayagraj',
+    'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur', 'Gwalior', 'Vijayawada',
+    'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Chandigarh', 'Guwahati',
+    'Mysore', 'Mysuru', 'Mangalore', 'Mangaluru', 'Hubli', 'Belgaum',
+    'Gulbarga', 'Kalaburagi', 'Shimoga', 'Shivamogga', 'Tumkur', 'Davangere'
+  ];
+
+  // Handle city input with autocomplete
+  const handleCityInput = (e) => {
+    const value = e.target.value;
+    setFormData({ ...formData, city: value });
+    
+    if (value.length > 0) {
+      const filtered = indianCities.filter(city =>
+        city.toLowerCase().includes(value.toLowerCase())
+      );
+      setCitySuggestions(filtered.slice(0, 10));
+      setShowCitySuggestions(true);
+    } else {
+      setShowCitySuggestions(false);
+    }
+  };
+
+  // Handle state input with autocomplete
+  const handleStateInput = (e) => {
+    const value = e.target.value;
+    setFormData({ ...formData, state: value });
+    
+    if (value.length > 0) {
+      const filtered = indianStates.filter(state =>
+        state.toLowerCase().includes(value.toLowerCase())
+      );
+      setStateSuggestions(filtered);
+      setShowStateSuggestions(true);
+    } else {
+      setShowStateSuggestions(false);
+    }
+  };
+
+  // Select city from suggestions
+  const selectCity = (city) => {
+    setFormData({ ...formData, city });
+    setShowCitySuggestions(false);
+  };
+
+  // Select state from suggestions
+  const selectState = (state) => {
+    setFormData({ ...formData, state });
+    setShowStateSuggestions(false);
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -410,25 +518,57 @@ const Checkout = () => {
                   />
                 </div>
                 <div className="form-row">
-                  <div className="form-group">
+                  <div className="form-group autocomplete-wrapper">
                     <label>City *</label>
                     <input
                       type="text"
                       name="city"
                       value={formData.city}
-                      onChange={handleInputChange}
+                      onChange={handleCityInput}
+                      onFocus={() => formData.city && setShowCitySuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
                       placeholder="City"
+                      autoComplete="off"
                     />
+                    {showCitySuggestions && citySuggestions.length > 0 && (
+                      <div className="autocomplete-dropdown">
+                        {citySuggestions.map((city, index) => (
+                          <div
+                            key={index}
+                            className="autocomplete-item"
+                            onClick={() => selectCity(city)}
+                          >
+                            {city}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="form-group">
+                  <div className="form-group autocomplete-wrapper">
                     <label>State *</label>
                     <input
                       type="text"
                       name="state"
                       value={formData.state}
-                      onChange={handleInputChange}
+                      onChange={handleStateInput}
+                      onFocus={() => formData.state && setShowStateSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowStateSuggestions(false), 200)}
                       placeholder="State"
+                      autoComplete="off"
                     />
+                    {showStateSuggestions && stateSuggestions.length > 0 && (
+                      <div className="autocomplete-dropdown">
+                        {stateSuggestions.map((state, index) => (
+                          <div
+                            key={index}
+                            className="autocomplete-item"
+                            onClick={() => selectState(state)}
+                          >
+                            {state}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="form-row">
@@ -541,12 +681,12 @@ const Checkout = () => {
                   <button className="back-btn" onClick={handleBack}>
                     Back
                   </button>
-                  <button 
-                    className="place-order-btn" 
+                  <button
+                    className="place-order-btn"
                     onClick={handlePlaceOrder}
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : `Place Order - ₹${getCartTotal()}`}
+                    {loading ? 'Processing...' : `Place Order - ₹${calculateTotal()}`}
                   </button>
                 </div>
               </div>
@@ -589,12 +729,21 @@ const Checkout = () => {
                 <span>₹{getCartTotal()}</span>
               </div>
               <div className="summary-row">
-                <span>Shipping</span>
-                <span className="free">FREE</span>
+                <span>Delivery Charges</span>
+                {calculateDeliveryCharges() === 0 ? (
+                  <span className="free">FREE</span>
+                ) : (
+                  <span>₹{calculateDeliveryCharges()}</span>
+                )}
               </div>
+              {getCartTotal() < 500 && (
+                <div className="summary-note">
+                  <small>💡 Add ₹{500 - getCartTotal()} more for free delivery!</small>
+                </div>
+              )}
               <div className="summary-row total">
                 <span>Total</span>
-                <span>₹{getCartTotal()}</span>
+                <span>₹{calculateTotal()}</span>
               </div>
             </div>
           </div>
