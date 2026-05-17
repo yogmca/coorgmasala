@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { productAPI } from '../services/api';
 import { useCart } from '../context/CartContext';
 import ReviewSection from '../components/ReviewSection';
 import SEOHelmet from '../components/SEOHelmet';
 import { generateMetaTags } from '../seo/seo-config';
-import { seoContent } from '../seo/content';
 import './Home.css';
 
 const Home = () => {
   const seoData = generateMetaTags('home');
-  const homeContent = seoContent.homepage;
   // SVG placeholder as data URI (no external dependency)
   const getPlaceholderImage = (text) => {
     const svg = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
@@ -25,18 +22,8 @@ const Home = () => {
     if (!imagePath) return getPlaceholderImage('No Image');
     if (imagePath.startsWith('http')) return imagePath;
     
-    // Get API URL from env or use current origin for production
-    const envUrl = process.env.REACT_APP_API_URL;
-    let baseUrl;
-    
-    if (envUrl && envUrl.trim()) {
-      baseUrl = envUrl.replace('/api', '');
-    } else if (window.location.hostname === 'localhost') {
-      baseUrl = 'http://localhost:5000';
-    } else {
-      // Production: use same domain
-      baseUrl = window.location.origin;
-    }
+    // Always use production server for images (where files are stored)
+    const baseUrl = 'https://coorgmasala.com';
     
     return `${baseUrl}${imagePath}`;
   };
@@ -96,9 +83,9 @@ const Home = () => {
 
       <section className="hero">
         <div className="hero-content">
-          <h1>{homeContent.hero.h1}</h1>
-          <p>{homeContent.hero.subtitle}</p>
-          <p className="hero-subtitle">{homeContent.hero.description}</p>
+          <h1>Premium Organic Indian Spices & Authentic Coorg Coffee</h1>
+          <p>Export Quality Spices from Coorg to Germany, Europe, USA, Dubai & Worldwide</p>
+          <p className="hero-subtitle">Discover the finest organic Indian spices and premium Coorg coffee. We export authentic, sustainably-sourced masala and coffee beans to international markets across Germany, Europe, United States, Dubai, and the globe.</p>
         </div>
       </section>
 
@@ -146,9 +133,9 @@ const Home = () => {
         <div className="container">
           <div className="delivery-content">
             <div className="delivery-icon">🚚</div>
-            <h2>We Deliver Across India</h2>
-            <p className="delivery-description">
-              Coorg Masala delivers premium spices and coffee right to your doorstep across India. 
+            <h2>We Deliver Across Major Indian Cities</h2>
+            <p className="delivery-description" style={{fontWeight: 'bold', fontSize: '18px'}}>
+              <strong style={{color: '#d35400'}}>Direct from plantation to your home kitchen.</strong> Coorg Masala delivers premium spices and coffee right to your doorstep across India.
               Enjoy fast and reliable shipping to all major cities and beyond.
             </p>
             <div className="delivery-cities">
