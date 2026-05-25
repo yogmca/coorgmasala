@@ -254,25 +254,19 @@ const Checkout = () => {
       const orderResponse = await orderAPI.create(orderData);
       const order = orderResponse.data.data;
 
-      // Initialize payment
-      const paymentGateway = formData.paymentMethod === 'credit_card' || formData.paymentMethod === 'debit_card' 
-        ? 'stripe' 
-        : 'razorpay';
+      // Initialize payment - Use Razorpay for all payment methods (UPI, Net Banking, Credit/Debit Cards)
+      const paymentGateway = 'razorpay';
 
       const paymentResponse = await orderAPI.initializePayment(order.orderId, {
         paymentGateway
       });
 
       if (!paymentResponse.data.success) {
-        throw new Error('Payment initialization failed');
+        throw new Error(paymentResponse.data.error || 'Payment initialization failed');
       }
 
-      // Simulate payment processing
-      if (paymentGateway === 'razorpay') {
-        await handleRazorpayPayment(order, paymentResponse.data.data);
-      } else {
-        await handleStripePayment(order, paymentResponse.data.data);
-      }
+      // Process payment through Razorpay
+      await handleRazorpayPayment(order, paymentResponse.data.data);
 
     } catch (err) {
       console.error('Order placement error:', err);
@@ -409,27 +403,6 @@ const Checkout = () => {
       setError('Payment gateway not loaded. Please refresh the page and try again.');
       setLoading(false);
     }
-  };
-
-  const handleStripePayment = async (order, paymentData) => {
-    // For demo purposes, simulate successful payment
-    setTimeout(async () => {
-      try {
-        const mockPaymentIntentId = `pi_${Date.now()}`;
-        await orderAPI.verifyPayment(order.orderId, {
-          paymentGateway: 'stripe',
-          paymentIntentId: mockPaymentIntentId
-        });
-
-        await clearCart();
-        navigate(`/order/${order.orderId}`);
-      } catch (err) {
-        console.error('Stripe payment error:', err);
-        const errorMessage = err.message || 'Payment processing failed';
-        setError(errorMessage);
-        setLoading(false);
-      }
-    }, 2000);
   };
 
   if (!cart || cart.items.length === 0) {
