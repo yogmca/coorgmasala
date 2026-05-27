@@ -25,7 +25,9 @@ const ShipmentTracking = () => {
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/orders/${orderId}`,
         config
       );
-      setOrder(response.data);
+      // Handle both response.data and response.data.data formats
+      const orderData = response.data.data || response.data;
+      setOrder(orderData);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching order:', err);
