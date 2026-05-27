@@ -1,31 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, Link } from 'react-router-dom';
+import { orderAPI } from '../services/api';
 import './ShipmentTracking.css';
 
 const ShipmentTracking = () => {
   const { orderId } = useParams();
-  const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchOrderDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = token ? {
-        headers: { Authorization: `Bearer ${token}` }
-      } : {};
-
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/orders/${orderId}`,
-        config
-      );
-      // Handle both response.data and response.data.data formats
+      const response = await orderAPI.getById(orderId);
       const orderData = response.data.data || response.data;
       setOrder(orderData);
       setLoading(false);
