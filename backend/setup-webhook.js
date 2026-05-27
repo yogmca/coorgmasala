@@ -27,7 +27,7 @@ async function setupWebhook() {
 
     // Create webhook configuration
     const webhook = new Webhook({
-      name: 'NimbusPost Shipment Tracking',
+      name: 'NimbusPost Tracking',
       deliveryUrl: 'https://coorgmasala.com/api/webhooks/receive/nimbuspost',
       secret: secret,
       isActive: true
