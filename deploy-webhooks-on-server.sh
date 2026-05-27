@@ -30,7 +30,7 @@ fi
 
 echo ""
 echo "🔄 Restarting backend server..."
-pm2 restart backend
+pm2 restart coorg-backend
 
 echo "⏳ Waiting for server to start..."
 sleep 5
