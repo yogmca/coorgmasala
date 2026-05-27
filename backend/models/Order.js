@@ -115,8 +115,40 @@ const orderSchema = new mongoose.Schema({
     notes: {
       type: String,
       default: ''
+    },
+    awbNumber: {
+      type: String,
+      default: ''
+    },
+    currentStatus: {
+      type: String,
+      default: ''
+    },
+    currentLocation: {
+      type: String,
+      default: ''
+    },
+    lastEventTime: {
+      type: Date
+    },
+    rtoAwb: {
+      type: String,
+      default: ''
     }
   },
+  webhookEvents: [{
+    awbNumber: String,
+    status: String,
+    eventTime: Date,
+    location: String,
+    message: String,
+    rtoAwb: String,
+    receivedAt: {
+      type: Date,
+      default: Date.now
+    },
+    rawPayload: mongoose.Schema.Types.Mixed
+  }],
   deliveryDate: Date
 }, {
   timestamps: true
