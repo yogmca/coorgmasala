@@ -9,6 +9,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import OrderDetails from './pages/OrderDetails';
+import ShipmentTracking from './pages/ShipmentTracking';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
@@ -31,6 +32,7 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-success/:orderId" element={<OrderSuccess />} />
                   <Route path="/order/:orderId" element={<OrderDetails />} />
+                  <Route path="/tracking/:orderId" element={<ShipmentTracking />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/profile" element={<Profile />} />
