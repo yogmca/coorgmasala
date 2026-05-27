@@ -87,8 +87,10 @@ const ShipmentTracking = () => {
     );
   }
 
-  // Check if there are webhook events
-  const hasTracking = order.webhookEvents && order.webhookEvents.length > 0;
+  // Check if there are webhook events or delivery info
+  const hasWebhookEvents = order.webhookEvents && order.webhookEvents.length > 0;
+  const hasDeliveryInfo = order.deliveryInfo && (order.deliveryInfo.trackingNumber || order.deliveryInfo.awbNumber || order.deliveryInfo.carrier);
+  const hasTracking = hasWebhookEvents || hasDeliveryInfo;
 
   if (!hasTracking) {
     return (
@@ -113,12 +115,19 @@ const ShipmentTracking = () => {
   }
 
   // Sort events by eventTime (newest first for display)
-  const sortedEvents = [...order.webhookEvents].sort((a, b) => 
+  const sortedEvents = hasWebhookEvents ? [...order.webhookEvents].sort((a, b) =>
     new Date(b.eventTime) - new Date(a.eventTime)
-  );
+  ) : [];
 
-  // Get the latest event
-  const latestEvent = sortedEvents[0];
+  // Get the latest event or create a default one from delivery info
+  const latestEvent = sortedEvents[0] || {
+    status: order.orderStatus === 'delivered' ? 'Delivered' :
+            order.orderStatus === 'out_for_delivery' ? 'Out for Delivery' :
+            order.orderStatus === 'shipped' ? 'Shipped' : 'In Transit',
+    location: order.deliveryInfo?.currentLocation || '',
+    message: order.deliveryInfo?.notes || 'Your order is on its way',
+    eventTime: order.deliveryInfo?.shippedAt || order.updatedAt
+  };
 
   return (
     <div className="shipment-tracking-page">
