@@ -623,7 +623,14 @@ const OrderDetails = () => {
         {/* Delivery Information (visible to all) */}
         {order.deliveryInfo && (order.deliveryInfo.trackingNumber || order.deliveryInfo.carrier || order.deliveryInfo.estimatedDelivery) && (
           <div className="delivery-info-card">
-            <h3>Delivery Information</h3>
+            <div className="delivery-info-header">
+              <h3>Delivery Information</h3>
+              {(order.orderStatus === 'shipped' || order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') && (
+                <Link to={`/tracking/${orderId}`} className="btn-view-tracking">
+                  📍 View Tracking
+                </Link>
+              )}
+            </div>
             <div className="delivery-info-grid">
               {order.deliveryInfo.trackingNumber && (
                 <div className="delivery-info-item">
@@ -767,6 +774,11 @@ const OrderDetails = () => {
 
         {/* Action Buttons */}
         <div className="order-actions">
+          {(order.orderStatus === 'shipped' || order.orderStatus === 'out_for_delivery' || order.orderStatus === 'delivered') && (
+            <Link to={`/tracking/${orderId}`} className="btn-track-shipment">
+              📍 Track Shipment
+            </Link>
+          )}
           <Link to="/" className="btn-continue-shopping">Continue Shopping</Link>
           <Link to="/profile" className="btn-view-orders">View All Orders</Link>
         </div>

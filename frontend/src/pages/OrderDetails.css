@@ -286,12 +286,41 @@
   margin-bottom: 25px;
 }
 
-.delivery-info-card h3 {
-  font-size: 18px;
-  color: #2c3e50;
+.delivery-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid #f0f0f0;
+}
+
+.delivery-info-card h3 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.btn-view-tracking {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-view-tracking:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  color: white;
 }
 
 .delivery-info-grid {
@@ -531,6 +560,28 @@
   transform: translateY(-1px);
 }
 
+.btn-track-shipment {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-track-shipment:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  color: white;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .order-details-grid {
@@ -581,5 +632,16 @@
 
   .admin-actions {
     flex-direction: column;
+  }
+
+  .delivery-info-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btn-view-tracking {
+    width: 100%;
+    justify-content: center;
   }
 }
