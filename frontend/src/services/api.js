@@ -83,7 +83,14 @@ export const orderAPI = {
     return api.post('/orders', data, config);
   },
   getById: (orderId) => api.get(`/orders/${orderId}`),
-  getAll: () => api.get('/orders'),
+  getAll: (params) => api.get('/orders', { params }),
+  getUserOrders: (params) => {
+    const token = localStorage.getItem('token');
+    return api.get('/orders/user/my-orders', {
+      params,
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
   updateStatus: (orderId, data) => {
     const token = localStorage.getItem('token');
     return api.patch(`/orders/${orderId}/status`, data, {

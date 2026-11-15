@@ -426,13 +426,61 @@ router.get('/:orderId', async (req, res) => {
 // Get all orders (Admin only - add auth middleware in production)
 router.get('/', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments();
     const orders = await Order.find()
       .populate('items.product')
-      .sort({ createdAt: -1 });
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
     
     res.json({
       success: true,
       count: orders.length,
+      total: totalOrders,
+      page,
+      totalPages: Math.ceil(totalOrders / limit),
+      data: orders
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get user's orders (authenticated users)
+router.get('/user/my-orders', optionalAuth, async (req, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ user: req.userId });
+    const orders = await Order.find({ user: req.userId })
+      .populate('items.product')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    res.json({
+      success: true,
+      count: orders.length,
+      total: totalOrders,
+      page,
+      totalPages: Math.ceil(totalOrders / limit),
       data: orders
     });
   } catch (error) {
