@@ -23,7 +23,7 @@ const Home = () => {
     if (imagePath.startsWith('http')) return imagePath;
     
     // Always use production server for images (where files are stored)
-    const baseUrl = 'https://coorgmasala.com';
+    const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL || 'https://coorgmasala.onrender.com';
     
     return `${baseUrl}${imagePath}`;
   };
