@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const Webhook = require('../models/Webhook');
 const WebhookPayload = require('../models/WebhookPayload');
 const Order = require('../models/Order');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Helper function to verify HMAC signature
 const verifyWebhookSignature = (payload, signature, secret) => {
