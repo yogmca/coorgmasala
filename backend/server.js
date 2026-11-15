@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -83,6 +84,12 @@ app.use('/api/*', (req, res) => {
     success: false,
     error: 'API route not found'
   });
+});
+
+// Catch-all route: serve React app for any non-API routes
+// This enables React Router client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
