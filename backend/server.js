@@ -78,6 +78,9 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Serve static files from React build directory
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
 // 404 handler - only for API routes
 app.use('/api/*', (req, res) => {
   res.status(404).json({
@@ -88,6 +91,7 @@ app.use('/api/*', (req, res) => {
 
 // Catch-all route: serve React app for any non-API routes
 // This enables React Router client-side routing
+// Must be after static file serving and API routes
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
 });
