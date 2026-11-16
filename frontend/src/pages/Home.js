@@ -20,9 +20,11 @@ const Home = () => {
   // Get the base URL for images
   const getImageUrl = (imagePath) => {
     if (!imagePath) return getPlaceholderImage('No Image');
+    
+    // If imagePath is already a full URL, use it as-is
     if (imagePath.startsWith('http')) return imagePath;
     
-    // Always use production server for images (where files are stored)
+    // Always prepend baseUrl for relative paths (images stored on production server)
     const baseUrl = process.env.REACT_APP_IMAGE_BASE_URL || 'https://coorgmasala.onrender.com';
     
     return `${baseUrl}${imagePath}`;
