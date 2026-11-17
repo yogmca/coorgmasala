@@ -57,19 +57,37 @@ router.get('/', async (req, res) => {
         const productObj = product.toObject ? product.toObject() : product;
         
         // Map product names to local image paths
+        // Note: Images are stored in backend/public/images/ and must persist across deploys
         const imageMap = {
+          // Core products with dedicated images
           'Black Pepper': '/images/black-pepper.jpg',
           'Black Pepper (500g)': '/images/black-pepper.jpg',
           'Cinnamon Sticks': '/images/cinnamon.jpg',
           'Green Cardamom': '/images/cardamom.jpg',
           'Turmeric Powder': '/images/turmeric.jpg',
-          'Dried Ginger': '/images/ginger.jpg',
           'Coffee Powder': '/images/coffee.jpg',
-          'Coffee Powder (1kg)': '/images/coffee.jpg'
+          'Coffee Powder (1kg)': '/images/coffee.jpg',
+
+          // Additional products - using available images
+          // Dried Ginger - using ginger dried.jpeg as fallback
+          'Dried Ginger': '/images/ginger dried.jpeg',
+
+          // Additional product images from the deployed files
+          // Star anise and other products - using available placeholder images
+          'Star Anise': '/images/Star-anise.jpg',
+          'Cloves': '/images/organic_cloves.jpeg',
+          'Ghee': '/images/ghee_organic.jpeg',
+
+          // Generic fallback for any product not explicitly mapped
+          // This will use the first available image as a placeholder
         };
         
         if (imageMap[productObj.name]) {
           productObj.image = imageMap[productObj.name];
+        } else {
+          // Fallback: use a default placeholder image for products not in the map
+          // This ensures all products have an image even after redeploys
+          productObj.image = '/images/black-pepper.jpg';
         }
         
         return productObj;
